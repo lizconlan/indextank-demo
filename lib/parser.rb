@@ -3,10 +3,11 @@ require 'rest-client'
 require 'date'
 
 class Parser
-  attr_reader :date, :doc_id
+  attr_reader :date, :doc_id, :house
   
   def initialize(date, house="Commons")
     @date = date
+    @house = house
     @doc_id = "#{date}_hansard_#{house[0..0].downcase()}"
   end
   
