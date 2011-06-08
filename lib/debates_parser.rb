@@ -1,13 +1,14 @@
 require 'lib/parser'
+require 'lib/page'
+require 'test'
 
 class DebatesParser < Parser  
-  def initialize
-    super()
-    @start_column, @end_column, @volume, @part = nil
+  def initialize(date, house="Commons")
+    super(date, house)
   end
   
-  def get_section_index
-    url = get_section_links["Debates and Oral Answers"]
+  def get_section_index(section="Debates and Oral Answers")
+    url = get_section_links[section]
     if url
       response = RestClient.get(url)
       return response.body
@@ -24,24 +25,131 @@ class DebatesParser < Parser
   end
   
   def parse_pages
+    @column = ""
+    @page = 0
+    
     page = Page.new(link_to_first_page)
     parse_page(page)
-    if page.next_url
+    while page.next_url
       page = Page.new(page.next_url)
-      parse_page(page.next_url)
+      parse_page(page)
     end
   end
   
   def parse_page(page)
-    subject = page.doc.xpath("//meta[@name='Subject']").attr("content").value.to_s
-    column_range = page.doc.xpath("//meta[@name='Columns']").attr("content").value.to_s
-    cols = column_range.gsub("Columns: ", "").split(" to ")
+    @snippet_type = ""
+    @link = ""
+    @topics = []
+    @departments = []
+    @snippet = []
+    @speakers = []
+    @snippets = []
+    @questions = []
     
-    @start_column = cols[0]
-    @end_column = cols[1]
-    @volume = subject[subject.index("Volume:")+8..subject.rindex(",")-1]
-    @part = subject[subject.index("Part:")+6..subject.length]
-    
+    @page += 1
     content = page.doc.xpath("//div[@id='content-small']")
+    content.children.each do |child|
+      if child.class == Nokogiri::XML::Element
+        parse_node(child)
+      end
+    end
+    
+    s = Search.new()
+    s.index.document("#{doc_id}_#{@page}").add(
+      {:title => sanitize_text("#{house} Hansard - #{page.title}"),
+       :text => @snippets.join(" "),
+       :volume => page.volume,
+       :columns => "#{page.start_column} to #{page.end_column}",
+       :part => sanitize_text(page.part.to_s),
+       :url => page.url,
+       :timestamp => Time.parse(date).to_i
+      }
+    )
+    
+    categories = {"house" => house, "source" => "Hansard", "section" => "Debates and Oral Answers"}
+    s.index.document("#{doc_id}_#{@page}").update_categories(categories)
+    
+    p "#{doc_id}_#{@page}"
   end
+  
+  private
+    def parse_node(node)
+      case node.name
+        when "a"
+          if node.attr("class") == "anchor-column"
+            @column = node.attr("name").gsub("column_", "")
+            @link = node.attr("name")
+            @snippet_type = "column heading"
+          else
+            unless @snippet == []
+              @snippets << @snippet.join(" ")
+              @snippet = []
+            end
+            case node.attr("name")
+              when /^hd_/
+                #heading e.g. the date, The House met at..., The Deputy PM was asked
+                @snippet_type = "heading"
+                @link = node.attr("name")
+              when /^place_/
+                @snippet_type = "location heading"
+                @link = node.attr("name")
+              when /^oralhd_/
+                @snippet_type = "question heading"
+                @link = node.attr("name")
+              when /^depthd_/
+                @snippet_type = "department heading"
+                @link = node.attr("name")
+              when /^subhd_/
+                @snippet_type = "subheading" #if we're lucky it's a topic
+                @link = node.attr("name")
+              when /^qn_/
+                @snippet_type = "question"
+                @link = node.attr("name")
+              when /^st_/
+                @snippet_type = "contribution"
+                @link = node.attr("name")
+            end
+          end
+        when "h2"
+          text = node.text.gsub("\n", "").squeeze(" ").strip
+          @snippet << sanitize_text(text)
+        when "h3"
+          text = node.text.gsub("\n", "").squeeze(" ").strip
+          @snippet << sanitize_text(text)
+          if @snippet_type == "department heading"
+            @departments << sanitize_text(text)
+          end
+          if @snippet_type == "question heading"
+            @topics << sanitize_text(text)
+          end
+        when "h4"
+          text = node.text.gsub("\n", "").squeeze(" ").strip
+          @snippet << sanitize_text(text)
+        when "h5"
+          text = node.text.gsub("\n", "").squeeze(" ").strip
+          @snippet << sanitize_text(text)
+        when "p"
+          unless @snippet_type == "column heading"
+            text = node.text.gsub("\n", "").squeeze(" ").strip
+            @snippet << sanitize_text(text)
+            if @snippet_type == "question" and text[text.length-1..text.length] == "]"
+              question = text[text.rindex("[")+1..text.length-2]
+              @questions << sanitize_text(question)
+            end
+          end
+        when "div"
+         #if node.attr("class").value.to_s == "navLinks"
+         #ignore
+        when "hr"
+          #ignore
+      end
+    end
+    
+    def sanitize_text(text)
+      text = text.gsub("\342\200\230", "'")
+      text = text.gsub("\342\200\231", "'")
+      text = text.gsub("\342\200\234", '"')
+      text = text.gsub("\342\200\235", '"')
+      text
+    end
 end
