@@ -67,6 +67,7 @@ class DebatesParser < Parser
        :part => sanitize_text(page.part.to_s),
        :url => page.url,
        :house => house,
+       :section => section,
        :timestamp => Time.parse(date).to_i
       }
     )
