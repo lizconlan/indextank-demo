@@ -9,7 +9,7 @@
     %a{:href => "?s=#{params[:s]}"} (remove filter)
     %br
   - else
-    -if @facets["section"].length > 1
+    -if @facets["section"] and @facets["section"].length > 1
       #facets
         %h3 Hansard Section
         %ul
