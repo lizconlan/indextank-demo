@@ -1,5 +1,5 @@
 %form
-  %input{:name => "s", :value => params[:s]}
+  %input{:name => "s", :value => h(params[:s])}
   %input{:type => "submit", :value => "Search"}
   
 -if @results
@@ -13,4 +13,4 @@
         %br
         %span.abstract= result["snippet_text"]
         %br
-        %span.url= result["url"].gsub("http://", "")
+        %span.url= format_url(result["url"])
