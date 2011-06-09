@@ -55,7 +55,7 @@ class Search
 
   def search(query)
     # Search the index
-    results = index.search(query, :snippet => 'text', :fetch => ':text, :url, :timestamp')
+    results = index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,house')
 
     print "#{results['matches']} documents found\n"
     results['results'].each { |doc|
@@ -64,5 +64,9 @@ class Search
     
     print "\n"
     print "debug: #{results.inspect}"
+  end
+  
+  def get_search_results(query)
+    index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,house')
   end
 end
