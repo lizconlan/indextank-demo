@@ -62,6 +62,7 @@ class DebatesParser < Parser
        :columns => "#{page.start_column} to #{page.end_column}",
        :part => sanitize_text(page.part.to_s),
        :url => page.url,
+       :house => house,
        :timestamp => Time.parse(date).to_i
       }
     )
