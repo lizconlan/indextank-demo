@@ -2,12 +2,15 @@ require 'lib/parser'
 require 'lib/page'
 require 'lib/test'
 
-class DebatesParser < Parser  
-  def initialize(date, house="Commons")
+class DebatesParser < Parser
+  attr_reader :section
+  
+  def initialize(date, house="Commons", section="Debates and Oral Answers")
     super(date, house)
+    @section = section
   end
   
-  def get_section_index(section="Debates and Oral Answers")
+  def get_section_index
     url = get_section_links[section]
     if url
       response = RestClient.get(url)
@@ -55,7 +58,8 @@ class DebatesParser < Parser
     end
     
     s = Search.new()
-    s.index.document("#{doc_id}_#{@page}").add(
+    segment_id = "#{doc_id}_#{section.downcase().gsub(" ", "-")}_#{@page}"
+    s.index.document(segment_id).add(
       {:title => sanitize_text("#{house} Hansard - #{page.title}"),
        :text => @snippets.join(" "),
        :volume => page.volume,
@@ -67,10 +71,10 @@ class DebatesParser < Parser
       }
     )
     
-    categories = {"house" => house, "source" => "Hansard", "section" => "Debates and Oral Answers"}
-    s.index.document("#{doc_id}_#{@page}").update_categories(categories)
+    categories = {"house" => house, "source" => "Hansard", "section" => section}
+    s.index.document(segment_id).update_categories(categories)
     
-    p "#{doc_id}_#{@page}"
+    p segment_id
   end
   
   private
