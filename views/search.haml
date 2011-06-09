@@ -3,6 +3,21 @@
   %input{:type => "submit", :value => "Search"}
   
 -if @results
+  - if @filter
+    Results filtered by
+    %b #{h(params[:val])}
+    %a{:href => "?s=#{params[:s]}"} (remove filter)
+    %br
+  - else
+    -if @facets["section"].length > 1
+      #facets
+        %h3 Hansard Section
+        %ul
+          -@facets["section"].each do |facet_key|
+            %li
+              %a{:href => "?s=#{params[:s]}&cat=section&val=#{facet_key[0]}"}
+                ="#{facet_key[0]} (#{facet_key[1]})"
+      
   #results
     -@results["results"].each do |result|
       %p.result

@@ -21,7 +21,15 @@ get "/" do
   query = params[:s]
   if query and query.strip != ""
     index = Search.new()
-    @results = index.get_search_results(query)
+    if params[:cat] and params[:val] and params[:cat].strip != "" and params[:val].strip != ""
+      @filter = {params[:cat] => params[:val]}
+      @results = index.get_search_results(query, @filter)
+    else
+      @results = index.get_search_results(query)
+    end
+    
+    @facets = @results["facets"]
+    # "search_time"=>"0.046", "facets"=>{"section"=>{"Debates and Oral Answers"=>6}, "house"=>{"Commons"=>6}, "source"=>{"Hansard"=>6}}, "matches"=>6
   end
   haml :search
 end
