@@ -1,6 +1,6 @@
 require 'lib/parser'
 require 'lib/page'
-require 'test'
+require 'lib/test'
 
 class DebatesParser < Parser  
   def initialize(date, house="Commons")
