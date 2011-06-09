@@ -1,0 +1,16 @@
+%form
+  %input{:name => "s", :value => params[:s]}
+  %input{:type => "submit", :value => "Search"}
+  
+-if @results
+  #results
+    -@results["results"].each do |result|
+      %p.result
+        %span.title
+          %a{:href => result["url"]}= result["title"]
+        %br
+        %span.description= "#{result["house"]} Hansard; Volume: #{result["volume"]} Part: #{result["part"]} Columns: #{result["columns"]}"
+        %br
+        %span.abstract= result["snippet_text"]
+        %br
+        %span.url= result["url"].gsub("http://", "")
