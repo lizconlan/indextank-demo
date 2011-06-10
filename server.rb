@@ -11,7 +11,8 @@ helpers do
     end
     if url.length > 50
       parts = url.split("/")
-      url = "<b>#{parts[0]}</b>/#{parts[1]}/#{parts[2]}/.../#{parts.last}"
+      url = "<strong class='highlight'>#{parts[0]}</strong>/#{parts[1]}/#{parts[2]}/&hellip;/#{parts.last}"
+
     end
     url
   end
