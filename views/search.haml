@@ -1,12 +1,12 @@
 %form
-  %input{:name => "s", :value => h(params[:s])}
+  %input{:name => "q", :value => h(params[:q])}
   %input{:type => "submit", :value => "Search"}
   
 -if @results
   - if @filter
     Showing only results from: 
     %b #{h(params[:val])}
-    %a{:href => "?s=#{params[:s]}"} (remove filter)
+    %a{:href => "?q=#{params[:q]}"} (remove filter)
     %br
   - else
     -if @facets["section"] and @facets["section"].length > 1
@@ -15,7 +15,7 @@
         %ul
           -@facets["section"].each do |facet_key|
             %li
-              %a{:href => "?s=#{params[:s]}&cat=section&val=#{facet_key[0]}"}
+              %a{:href => "?q=#{params[:q]}&cat=section&val=#{facet_key[0]}"}
                 ="#{facet_key[0]} (#{facet_key[1]})"
       
   #results

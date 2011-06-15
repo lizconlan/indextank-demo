@@ -19,7 +19,7 @@ helpers do
 end
 
 get "/" do
-  query = params[:s]
+  query = params[:q]
   if query and query.strip != ""
     index = Search.new()
     if params[:cat] and params[:val] and params[:cat].strip != "" and params[:val].strip != ""
