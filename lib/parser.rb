@@ -36,6 +36,8 @@ class Parser
       text = text.gsub("\342\200\231", "'")
       text = text.gsub("\342\200\234", '"')
       text = text.gsub("\342\200\235", '"')
+      text = text.gsub("\342\200\224", " - ")
+      text = text.gsub("\302\243", "&pound;")
       text
     end
 end
