@@ -33,7 +33,7 @@ class WHDebatesParser < Parser
     @count = 0
     
     @snippet_type = ""
-    @link = ""
+    @last_link = ""
     @snippet = []
     @questions = []
     @subject = ""
@@ -69,38 +69,36 @@ class WHDebatesParser < Parser
     def parse_node(node, page)
       case node.name
         when "a"
+          @last_link = node.attr("name")
           if node.attr("class") == "anchor-column"
             if @start_column == ""
               @start_column = node.attr("name").gsub("column_", "")
             else
               @end_column = node.attr("name").gsub("column_", "")
             end
-            @link = node.attr("name")
             @snippet_type = "column heading"
           else
             case node.attr("name")
               when /^time_/
                 @snippet_type = "timestamp"
-                @link = node.attr("name")
               when /^place_/
                 @snippet_type = "location heading"
-                @link = node.attr("name")
               when /^hd_/
                 @snippet_type = "heading"
-                @link = node.attr("name")
               when /^st_/
                 @snippet_type = "contribution"
-                @link = node.attr("name")
             end
           end
         when "h3"
           unless @snippet.empty?
             write_segment(page)
             @snippet = []
+            @segment_link = ""
           end
           text = node.text.gsub("\n", "").squeeze(" ").strip
           @snippet << sanitize_text(text)
           @subject = sanitize_text(text)
+          @segment_link = "#{page.url}\##{@last_link}"
         when "h4"
           text = node.text.gsub("\n", "").squeeze(" ").strip
           if text[text.length-13..text.length-2] == "in the Chair"
@@ -126,7 +124,7 @@ class WHDebatesParser < Parser
          :part => sanitize_text(page.part.to_s),
          :chair => @chair,
          :subject => @subject,
-         :url => @link,
+         :url => @segment_link,
          :house => house,
          :section => section,
          :timestamp => Time.parse(date).to_i
