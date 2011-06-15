@@ -24,7 +24,10 @@
         %span.title
           %a{:href => result["url"]}= result["title"]
         %br
-        %span.description= "#{result["house"]} #{result["section"]}; Vol #{result["volume"]}; Part #{result["part"]}; Cols #{result["columns"]}"
+        - if result["section"] == "Westminster Hall"
+          %span.description= "Westminster Hall Debate; #{result["chair"]} in the Chair"
+          %br
+        %span.description= "#{result["house"]} Hansard; Vol #{result["volume"]}; Part #{result["part"]}; Cols #{result["columns"]}"
         %br
         %span.abstract= result["snippet_text"]
         %br
