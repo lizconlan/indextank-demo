@@ -29,4 +29,13 @@ class Parser
   
     urls
   end
+  
+  private
+    def sanitize_text(text)
+      text = text.gsub("\342\200\230", "'")
+      text = text.gsub("\342\200\231", "'")
+      text = text.gsub("\342\200\234", '"')
+      text = text.gsub("\342\200\235", '"')
+      text
+    end
 end
