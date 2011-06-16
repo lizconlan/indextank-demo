@@ -1,6 +1,7 @@
 require 'nokogiri'
 require 'rest-client'
 require 'date'
+require 'time'
 
 class Parser
   attr_reader :date, :doc_id, :house
