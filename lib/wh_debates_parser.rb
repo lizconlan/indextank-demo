@@ -1,6 +1,7 @@
 require 'lib/parser'
 require 'lib/page'
 require 'lib/test'
+require 'lib/member'
 
 class WHDebatesParser < Parser
   attr_reader :section
@@ -23,22 +24,30 @@ class WHDebatesParser < Parser
     return nil unless html
     doc = Nokogiri::HTML(html)
     
-    relative_path = doc.xpath("//div[@id='content-small']/p[3]/a").attr("href").value.to_s
+    content_section = doc.xpath("//div[@id='content-small']/p[3]/a")
+    if content_section.empty?
+      content_section = doc.xpath("//div[@id='maincontent1']/div/a[1]")
+    end
+    relative_path = content_section.attr("href").value.to_s
     "http://www.publications.parliament.uk#{relative_path[0..relative_path.rindex("#")-1]}"
   end
   
   def parse_pages
-    @column = ""
     @page = 0
     @count = 0
+    @contribution_count = 0
+
+    @members = {}
+    @member = nil
+    @contribution = nil
     
     @snippet_type = ""
     @last_link = ""
     @snippet = []
-    @questions = []
     @subject = ""
     @start_column = ""
     @end_column = ""
+    
     @chair = ""
     
     page = Page.new(link_to_first_page)
@@ -50,7 +59,7 @@ class WHDebatesParser < Parser
     
     #flush the buffer
     unless @snippet.empty?
-      write_segment(page)
+      store_debate(page)
       @snippet = []
     end
   end
@@ -91,7 +100,7 @@ class WHDebatesParser < Parser
           end
         when "h3"
           unless @snippet.empty?
-            write_segment(page)
+            store_debate(page)
             @snippet = []
             @segment_link = ""
           end
@@ -104,15 +113,71 @@ class WHDebatesParser < Parser
           if text[text.length-13..text.length-2] == "in the Chair"
             @chair = text[1..text.length-15]
           end
-        when "p"
+        when "p"          
           text = node.text.gsub("\n", "").squeeze(" ").strip
-          unless text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column \d+(WH)?$/
+          #ignore column heading text
+          unless text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column \d+(WH)?$/            
+            #check if this is a new contrib
+            case text
+              when /^(([^\(]*) \(([^\(]*)\):)/
+                #we has a minister
+                post = $2
+                name = $3
+                member = Member.new(name, "", "", post)
+                handle_contribution(@member, member)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              when /^(([^\(]*) \(in the Chair\):)/
+                #the Chair
+                name = $2
+                post = "Debate Chair"
+                member = Member.new(name, "", "", post)
+                handle_contribution(@member, member)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              when /^(([^\(]*) \(([^\(]*)\) \(([^\(]*)\):)/
+                #an MP speaking for the first time in the debate
+                name = $2
+                constituency = $3
+                party = $4
+                member = Member.new(name, constituency, party)
+                handle_contribution(@member, member)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              when /^(([^\(]*):)/
+                #an MP who's spoken before
+                name = $2
+                member = Member.new(name)
+                handle_contribution(@member, member)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              else
+                if @member
+                  unless text =~ /^Sitting suspended|^Sitting adjourned|^On resuming|^Question put/ or
+                      text == "#{@member.search_name} rose\342\200\224"
+                    @contribution.segments << sanitize_text(text)
+                  end
+                end
+            end
             @snippet << sanitize_text(text)
           end
       end
     end
+
+    def handle_contribution(member, new_member)
+      if @contribution
+        unless @members.keys.include?(member.search_name)
+          @members[member.search_name] = member
+        end
+        @members[member.search_name].contributions << @contribution
+      end
+      if @end_column == ""
+        @contribution = Contribution.new(@last_link, @start_column)
+      else
+        @contribution = Contribution.new(@last_link, @end_column)
+      end
+      p "> #{new_member.search_name}"
+      @members[new_member.search_name] = new_member
+      @member = new_member
+    end
     
-    def write_segment(page)
+    def store_debate(page)
       s = Search.new()
       segment_id = "#{doc_id}_wh_#{@count}"
       @count += 1
@@ -131,11 +196,61 @@ class WHDebatesParser < Parser
         }
       )
 
-      categories = {"house" => house, "source" => "Hansard", "section" => section}
+      categories = {"house" => house, "section" => section}
       s.index.document(segment_id).update_categories(categories)
 
       p @subject
       p segment_id
       p ""
+      
+      store_member_contributions(page)
+    end
+    
+    def store_member_contributions(page)
+      raise @members.keys.inspect
+      
+      p ""
+      @members.keys.each do |member|
+        p "checking... #{member}"
+        @member[member].contributions.each do |contribution|
+          s = Search.new()
+          segment_id = "#{doc_id}_wh_contribution_#{@contribution_count}"
+          @contribution_count += 1
+      
+          column_text = ""
+          if contribution.start_column == contribution.end_column
+            column_text = contribution.start_column
+          else
+            column_text = "#{contribution.start_column} to #{contribution.end_column}"
+          end
+      
+          s.index.document(segment_id).add(
+            {:title => sanitize_text("#{@subject}"),
+             :member => @member[member].name,
+             :constituency => @constituency,
+             :post => @member[member].post,
+             :text => contribution.text,
+             :volume => page.volume,
+             :columns => column_text,
+             :part => sanitize_text(page.part.to_s),
+             :chair => @chair,
+             :subject => @subject,
+             :url => contribution.link,
+             :house => house,
+             :section => section,
+             :timestamp => Time.parse(date).to_i
+            }
+          )
+
+          categories = {"house" => house, "section" => section, "subject" => @subject}
+          s.contribs_index.document(segment_id).update_categories(categories)
+
+          p "#{@member}, #{@subject}"
+          p segment_id
+          p ""
+        end
+      end
+      @members = {}
+      @member = nil
     end
 end
