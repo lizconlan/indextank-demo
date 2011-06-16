@@ -19,6 +19,7 @@ helpers do
 end
 
 get "/favicon.ico" do
+  status 404
 end
 
 get "/" do
