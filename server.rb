@@ -27,9 +27,9 @@ get "/" do
     index = Search.new()
     if params[:cat] and params[:val] and params[:cat].strip != "" and params[:val].strip != ""
       @filter = {params[:cat] => params[:val]}
-      @results = index.get_search_results(query, @filter)
+      @results = index.search(query, @filter)
     else
-      @results = index.get_search_results(query)
+      @results = index.search(query)
     end
     
     @facets = @results["facets"]
