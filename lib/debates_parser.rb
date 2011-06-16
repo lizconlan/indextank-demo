@@ -60,7 +60,7 @@ class DebatesParser < Parser
     s = Search.new()
     segment_id = "#{doc_id}_#{section.downcase().gsub(" ", "-")}_#{@page}"
     s.index.document(segment_id).add(
-      {:title => sanitize_text("#{house} Hansard - #{page.title}"),
+      {:title => sanitize_text(page.title),
        :text => @snippets.join(" "),
        :volume => page.volume,
        :columns => "#{page.start_column} to #{page.end_column}",
