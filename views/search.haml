@@ -3,7 +3,9 @@
   %input{:type => "submit", :value => "Search"}
   
 -if @results
-
+  - if @results["results"].empty?
+    No results for #{h(params[:q])}
+    
   - if @filter
     #filter
       Showing only results from 
