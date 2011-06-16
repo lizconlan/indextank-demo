@@ -18,6 +18,9 @@ helpers do
   end
 end
 
+get "/favicon.ico" do
+end
+
 get "/" do
   query = params[:q]
   if query and query.strip != ""
