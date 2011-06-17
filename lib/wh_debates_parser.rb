@@ -240,7 +240,7 @@ class WHDebatesParser < Parser
             }
           )
 
-          categories = {"house" => house, "section" => section, "subject" => @subject}
+          categories = {"house" => house, "section" => section, "subject" => @subject, "member" => @members[member].name}
           s.contribs_index.document(segment_id).update_categories(categories)
 
           p "#{@members[member].name}, #{@subject}"
