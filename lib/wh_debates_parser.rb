@@ -41,7 +41,6 @@ class WHDebatesParser < Parser
     @member = nil
     @contribution = nil
     
-    @snippet_type = ""
     @last_link = ""
     @snippet = []
     @subject = ""
@@ -85,18 +84,6 @@ class WHDebatesParser < Parser
             else
               @end_column = node.attr("name").gsub("column_", "")
             end
-            @snippet_type = "column heading"
-          else
-            case node.attr("name")
-              when /^time_/
-                @snippet_type = "timestamp"
-              when /^place_/
-                @snippet_type = "location heading"
-              when /^hd_/
-                @snippet_type = "heading"
-              when /^st_/
-                @snippet_type = "contribution"
-            end
           end
         when "h3"
           unless @snippet.empty?
@@ -113,39 +100,48 @@ class WHDebatesParser < Parser
           if text[text.length-13..text.length-2] == "in the Chair"
             @chair = text[1..text.length-15]
           end
-        when "p"          
+        when "p"
+          unless node.xpath("a").empty?
+            @last_link = node.xpath("a").last.attr("name")
+          end
+          unless node.xpath("b").empty?
+            member_name = node.xpath("b").text.strip
+          else
+            member_name = ""
+          end
+          
           text = node.text.gsub("\n", "").squeeze(" ").strip
           #ignore column heading text
           unless text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column \d+(WH)?$/            
             #check if this is a new contrib
-            case text
+            case member_name
               when /^(([^\(]*) \(([^\(]*)\):)/
                 #we has a minister
                 post = $2
                 name = $3
-                member = Member.new(name, "", "", post)
-                handle_contribution(@member, member)
+                member = Member.new(name, "", "", "", post)
+                handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
               when /^(([^\(]*) \(in the Chair\):)/
                 #the Chair
                 name = $2
                 post = "Debate Chair"
-                member = Member.new(name, "", "", post)
-                handle_contribution(@member, member)
+                member = Member.new(name, name, "", "", post)
+                handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
               when /^(([^\(]*) \(([^\(]*)\) \(([^\(]*)\):)/
                 #an MP speaking for the first time in the debate
                 name = $2
                 constituency = $3
                 party = $4
-                member = Member.new(name, constituency, party)
-                handle_contribution(@member, member)
+                member = Member.new(name, "", constituency, party)
+                handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
               when /^(([^\(]*):)/
                 #an MP who's spoken before
                 name = $2
-                member = Member.new(name)
-                handle_contribution(@member, member)
+                member = Member.new(name, name)
+                handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
               else
                 if @member
@@ -160,20 +156,24 @@ class WHDebatesParser < Parser
       end
     end
 
-    def handle_contribution(member, new_member)
-      if @contribution
+    def handle_contribution(member, new_member, page)
+      if @contribution and member
         unless @members.keys.include?(member.search_name)
           @members[member.search_name] = member
         end
+        @contribution.end_column = @end_column
         @members[member.search_name].contributions << @contribution
       end
       if @end_column == ""
-        @contribution = Contribution.new(@last_link, @start_column)
+        @contribution = Contribution.new(@segment_link = "#{page.url}\##{@last_link}", @start_column)
       else
-        @contribution = Contribution.new(@last_link, @end_column)
+        @contribution = Contribution.new(@segment_link = "#{page.url}\##{@last_link}", @end_column)
       end
-      p "> #{new_member.search_name}"
-      @members[new_member.search_name] = new_member
+      if @members.keys.include?(new_member.search_name)
+        new_member = @members[new_member.search_name]
+      else
+        @members[new_member.search_name] = new_member
+      end
       @member = new_member
     end
     
@@ -206,13 +206,11 @@ class WHDebatesParser < Parser
       store_member_contributions(page)
     end
     
-    def store_member_contributions(page)
-      raise @members.keys.inspect
-      
+    def store_member_contributions(page)      
       p ""
       @members.keys.each do |member|
-        p "checking... #{member}"
-        @member[member].contributions.each do |contribution|
+        p "storing contributions for: #{member}"
+        @members[member].contributions.each do |contribution|
           s = Search.new()
           segment_id = "#{doc_id}_wh_contribution_#{@contribution_count}"
           @contribution_count += 1
@@ -224,12 +222,12 @@ class WHDebatesParser < Parser
             column_text = "#{contribution.start_column} to #{contribution.end_column}"
           end
       
-          s.index.document(segment_id).add(
+          s.contribs_index.document(segment_id).add(
             {:title => sanitize_text("#{@subject}"),
-             :member => @member[member].name,
-             :constituency => @constituency,
-             :post => @member[member].post,
-             :text => contribution.text,
+             :member => @members[member].name,
+             :constituency => @members[member].constituency,
+             :post => @members[member].post,
+             :text => contribution.segments.join(" "),
              :volume => page.volume,
              :columns => column_text,
              :part => sanitize_text(page.part.to_s),
@@ -245,7 +243,7 @@ class WHDebatesParser < Parser
           categories = {"house" => house, "section" => section, "subject" => @subject}
           s.contribs_index.document(segment_id).update_categories(categories)
 
-          p "#{@member}, #{@subject}"
+          p "#{@members[member].name}, #{@subject}"
           p segment_id
           p ""
         end

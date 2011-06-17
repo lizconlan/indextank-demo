@@ -2,8 +2,12 @@ class Member
   attr_reader :name, :post, :party, :constituency, :search_name
   attr_accessor :contributions
   
-  def initialize(name, constituency="", party="", post="")
-    @search_name = format_search_name(name)
+  def initialize(name, search_name="", constituency="", party="", post="")
+    if search_name == ""
+      @search_name = format_search_name(name)
+    else
+      @search_name = name
+    end
     @name = name
     @constituency = constituency
     @party = party
