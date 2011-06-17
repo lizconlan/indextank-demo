@@ -4,13 +4,17 @@
   
 -if @results
   - if @results["results"].empty?
-    No results for #{h(params[:q])}
+    No results for #{h(@query)}
     
-  - if @filter
+  - unless @filter.empty?
     #filter
       Showing only results from 
-      %strong #{h(params[:val])}.
-      %a.filter{:href => "?q=#{params[:q]}"} [Show all]
+      - if @filter[:member]
+        contributions by
+        %strong #{h(@filter[:member])}
+      - else
+        %strong #{h(params[:val])}.
+      %a.filter{:href => "?q=#{@query}"} [Show all]
       %br
   - else
     -if @facets["section"] and @facets["section"].length > 1

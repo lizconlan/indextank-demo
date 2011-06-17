@@ -23,15 +23,26 @@ get "/favicon.ico" do
 end
 
 get "/" do
-  query = params[:q]
-  if query and query.strip != ""
+  @query = params[:q]
+  if @query and @query.strip != ""
+    offset = @query.index("member:")
+    member = nil
+    if offset
+      string_end = @query.index(" ", offset+7)
+      string_end = @query.length unless string_end 
+      member = @query[offset+7..string_end].strip
+      @query = @query.gsub("member:#{member}", "").strip
+    end
+    
+    @filter = {}
     index = Search.new()
     if params[:cat] and params[:val] and params[:cat].strip != "" and params[:val].strip != ""
-      @filter = {params[:cat] => params[:val]}
-      @results = index.search(query, @filter)
-    else
-      @results = index.search(query)
+      @filter[params[:cat]] = params[:val]
     end
+    if member
+      @filter[:member] = member.gsub("+", " ")
+    end
+    @results = index.search(@query, @filter)
     
     @facets = @results["facets"]
     # "search_time"=>"0.046", "facets"=>{"section"=>{"Debates and Oral Answers"=>6}, "house"=>{"Commons"=>6}, "source"=>{"Hansard"=>6}}, "matches"=>6
