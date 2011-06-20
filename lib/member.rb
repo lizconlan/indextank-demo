@@ -8,7 +8,7 @@ class Member
       @index_name = format_index_name(name)
     else
       @search_name = name
-      @index_name = name
+      @index_name = format_index_name(name)
     end
     @name = name
     @constituency = constituency
