@@ -77,7 +77,7 @@ class WHDebatesParser < Parser
     def parse_node(node, page)
       case node.name
         when "a"
-          @last_link = node.attr("name")
+          @last_link = node.attr("name") if node.attr("class") == "anchor"
           if node.attr("class") == "anchor-column"
             if @start_column == ""
               @start_column = node.attr("name").gsub("column_", "")
@@ -165,9 +165,9 @@ class WHDebatesParser < Parser
         @members[member.search_name].contributions << @contribution
       end
       if @end_column == ""
-        @contribution = Contribution.new(@segment_link = "#{page.url}\##{@last_link}", @start_column)
+        @contribution = Contribution.new("#{page.url}\##{@last_link}", @start_column)
       else
-        @contribution = Contribution.new(@segment_link = "#{page.url}\##{@last_link}", @end_column)
+        @contribution = Contribution.new("#{page.url}\##{@last_link}", @end_column)
       end
       if @members.keys.include?(new_member.search_name)
         new_member = @members[new_member.search_name]
@@ -202,8 +202,11 @@ class WHDebatesParser < Parser
       categories = {"house" => house, "section" => section}
       s.index.document(segment_id).update_categories(categories)
 
+      @start_column = @end_column
+      
       p @subject
       p segment_id
+      p @segment_link
       p ""
       
       store_member_contributions(page)
