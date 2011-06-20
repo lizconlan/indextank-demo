@@ -24,28 +24,41 @@ end
 
 get "/" do
   @query = params[:q]
+  
+  @filter = {}
+  
+  if params[:cat] and params[:val] and params[:cat].strip != "" and params[:val].strip != ""
+    @filter[params[:cat]] = params[:val]
+  end
+  
   if @query and @query.strip != ""
     offset = @query.index("member:")
-    member = nil
+    @member = nil
     if offset
       string_end = @query.index(" ", offset+7)
       string_end = @query.length unless string_end 
-      member = @query[offset+7..string_end].strip
-      @query = @query.gsub("member:#{member}", "").strip
+      @member = @query[offset+7..string_end].strip
+      @query = @query.gsub("member:#{@member}", "").strip
     end
     
-    @filter = {}
-    index = Search.new()
-    if params[:cat] and params[:val] and params[:cat].strip != "" and params[:val].strip != ""
-      @filter[params[:cat]] = params[:val]
+    if @member
+      @results = do_member_debates_search(@member, @query)
+    else
+      index = Search.new()
+      @results = index.search(@query, @filter)
     end
-    if member
-      @filter[:member] = member.gsub("+", " ")
-    end
-    @results = index.search(@query, @filter)
     
     @facets = @results["facets"]
     # "search_time"=>"0.046", "facets"=>{"section"=>{"Debates and Oral Answers"=>6}, "house"=>{"Commons"=>6}, "source"=>{"Hansard"=>6}}, "matches"=>6
   end
   haml :search
 end
+
+private
+  def do_member_debates_search(member_name, rest_of_query="")
+    search = Search.new()
+    query = "members:#{member_name}"
+    query = "#{query} text:#{rest_of_query}" unless rest_of_query == ""
+    search.index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house',
+       :category_filters => @filter)
+  end

@@ -4,7 +4,20 @@
   
 -if @results
   - if @results["results"].empty?
-    No results for #{h(@query)}
+    No Hansard entries found for 
+    %strong #{h(@query)}
+  - elsif @member
+    - if @query == ""
+      Hansard entries featuring contributions by
+      %strong #{h(@member.gsub("+", " "))}
+    - else
+      Hansard entries containing
+      %strong #{h(@query)}
+      and featuring contributions by
+      %strong #{h(@member.gsub("+", " "))}
+  - else
+    Hansard entries containing
+    %strong #{h(@query)}
     
   - unless @filter.empty?
     #filter
@@ -37,6 +50,7 @@
           %br
         %span.description= "<strong>#{result["house"]} Hansard</strong> Vol #{result["volume"]}; Part #{result["part"]}; Cols #{result["columns"]}"
         %br
-        %span.abstract= result["snippet_text"]
-        %br
+        - if result["snippet_text"] != ""
+          %span.abstract= result["snippet_text"]
+          %br
         %span.url= format_url(result["url"])

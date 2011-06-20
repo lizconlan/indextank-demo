@@ -181,12 +181,15 @@ class WHDebatesParser < Parser
       s = Search.new()
       segment_id = "#{doc_id}_wh_#{@count}"
       @count += 1
+      names = []
+      @members.each { |x, y| names << y.index_name }
       s.index.document(segment_id).add(
-        {:title => sanitize_text("Westminster Hall Debate - #{@subject}"),
+        {:title => sanitize_text("Debate: #{@subject}"),
          :text => @snippet.join(" "),
          :volume => page.volume,
          :columns => "#{@start_column} to #{@end_column}",
          :part => sanitize_text(page.part.to_s),
+         :members => "| #{names.join(" | ")} |".squeeze(" "),
          :chair => @chair,
          :subject => @subject,
          :url => @segment_link,
