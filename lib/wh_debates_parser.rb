@@ -224,7 +224,7 @@ class WHDebatesParser < Parser
       
           s.contribs_index.document(segment_id).add(
             {:title => sanitize_text("#{@subject}"),
-             :member => @members[member].name,
+             :member => @members[member].index_name,
              :constituency => @members[member].constituency,
              :post => @members[member].post,
              :text => contribution.segments.join(" "),
@@ -240,10 +240,10 @@ class WHDebatesParser < Parser
             }
           )
 
-          categories = {"house" => house, "section" => section, "subject" => @subject, "member" => @members[member].name}
+          categories = {"house" => house, "section" => section, "subject" => @subject, "member" => @members[member].index_name}
           s.contribs_index.document(segment_id).update_categories(categories)
 
-          p "#{@members[member].name}, #{@subject}"
+          p "#{@members[member].index_name}, #{@subject}"
           p segment_id
           p ""
         end
