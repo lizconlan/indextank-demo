@@ -100,8 +100,8 @@ class WHDebatesParser < Parser
           if text[text.length-13..text.length-2] == "in the Chair"
             @chair = text[1..text.length-15]
           end
-        when "p"
-          unless node.xpath("a").empty?
+        when "p"          
+          if node.xpath("a") and node.xpath("a").length > 0
             @last_link = node.xpath("a").last.attr("name")
           end
           unless node.xpath("b").empty?
