@@ -6,6 +6,17 @@
   - if @results["results"].empty?
     No Hansard entries found for 
     %strong #{h(@query)}
+    - if @member and @suggestions.length > 0
+      %strong #{h(@member.gsub("+", " "))}
+      %p
+        Did you mean:&nbsp;
+        - @suggestions.each do |suggestion|
+          %strong>
+            %a{:href=>"/?q=member:#{suggestion.gsub(" ","%2B")}"}>= suggestion
+          - if @suggestions.length > 1 and suggestion == @suggestions[@suggestions.length - 2]
+            &nbsp;or&nbsp;
+          - elsif suggestion != @suggestions.last
+            ,&nbsp
   - elsif @member
     - if @query == ""
       Hansard entries featuring contributions by

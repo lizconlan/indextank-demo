@@ -24,6 +24,7 @@ end
 
 get "/" do
   @query = params[:q]
+  @suggestions = []
   
   @filter = {}
   
@@ -43,6 +44,23 @@ get "/" do
     
     if @member
       @results = do_member_debates_search(@member, @query)
+      if @results["matches"] == 0 and @query == ""
+        surname = @member.split("+").last
+        firstname = @member.split("+").first
+        results = do_member_contributions_search(surname)
+        candidates = results["facets"]["member"]
+        if candidates
+          candidates.each do |candidate_name, count|
+            if candidate_name.split(" ").first == firstname
+              @suggestions << candidate_name
+            end
+          end
+          if @suggestions.empty?
+            @suggestions = candidates.collect{ |x| x[0] }
+          end
+        end
+        p @suggestions
+      end
     else
       index = Search.new()
       @results = index.search(@query, @filter)
@@ -61,4 +79,10 @@ private
     query = "#{query} text:#{rest_of_query}" unless rest_of_query == ""
     search.index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house',
        :category_filters => @filter)
+  end
+  
+  def do_member_contributions_search(member_name)
+    search = Search.new()
+    query = "member:#{member_name}"
+    search.contribs_index.search(query)
   end
