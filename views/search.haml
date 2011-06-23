@@ -6,8 +6,10 @@
   - if @results["results"].empty?
     No Hansard entries found for 
     %strong #{h(@query)}
-    - if @member and @suggestions.length > 0
+    - if @member
       %strong #{h(@member.gsub("+", " "))}
+    - if @member and @suggestions.length > 0
+      
       %p
         Did you mean:&nbsp;
         - @suggestions.each do |suggestion|
