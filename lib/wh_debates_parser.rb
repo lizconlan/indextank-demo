@@ -49,17 +49,21 @@ class WHDebatesParser < Parser
     
     @chair = ""
     
-    page = Page.new(link_to_first_page)
-    parse_page(page)
-    while page.next_url
-      page = Page.new(page.next_url)
+    unless link_to_first_page
+      p "No data available for this date"
+    else
+      page = Page.new(link_to_first_page)
       parse_page(page)
-    end
+      while page.next_url
+        page = Page.new(page.next_url)
+        parse_page(page)
+      end
     
-    #flush the buffer
-    unless @snippet.empty?
-      store_debate(page)
-      @snippet = []
+      #flush the buffer
+      unless @snippet.empty?
+        store_debate(page)
+        @snippet = []
+      end
     end
   end
   
