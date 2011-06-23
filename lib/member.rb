@@ -19,7 +19,7 @@ class Member
   
   private
     def format_search_name(member_name)
-      if member_name =~ /^Mr |^Ms |^Mrs |^Miss /
+      if member_name =~ /^Mr |^Ms |^Mrs |^Miss |^Dr /
         parts = member_name.split(" ").reverse
         name = parts.pop
         parts.pop #drop the firstname
@@ -29,7 +29,7 @@ class Member
     end
     
     def format_index_name(member_name)
-      if member_name =~ /^(Mr |^Ms |^Mrs |^Miss )/
+      if member_name =~ /^(Mr |^Ms |^Mrs |^Miss |^Dr )/
         member_name = member_name.gsub($1, "").strip
       end
       member_name
