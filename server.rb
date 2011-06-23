@@ -51,7 +51,7 @@ get "/" do
         candidates = results["facets"]["member"]
         if candidates
           candidates.each do |candidate_name, count|
-            if candidate_name.split(" ").first == firstname
+            if candidate_name.split(" ").first.downcase == firstname.downcase
               @suggestions << candidate_name
             end
           end
