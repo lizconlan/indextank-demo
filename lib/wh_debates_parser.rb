@@ -224,9 +224,11 @@ class WHDebatesParser < Parser
       #       p "url: #{@segment_link}"      
       #       p "text field size: #{@snippet.join(" ").size} (#{@snippet.join(" ").size/1024}k, approx)"
       
+      segment_end = find_breakpoint(@snippet.join(" "), 100000)
+      
       s.index.document(segment_id).add(
         {:title => sanitize_text("Debate: #{@subject}"),
-         :text => @snippet.join(" ")[0..100000],
+         :text => @snippet.join(" ")[0..segment_end],
          :volume => page.volume,
          :columns => "#{@start_column} to #{@end_column}",
          :part => sanitize_text(page.part.to_s),
@@ -248,7 +250,7 @@ class WHDebatesParser < Parser
         segment_id = "#{segment_id}__1"
         s.index.document(segment_id).add(
           {:title => sanitize_text("Debate: #{@subject}"),
-           :text => @snippet.join(" ")[100001..200000],
+           :text => @snippet.join(" ")[segment_end+1..@snippet.join(" ").length],
            :volume => page.volume,
            :columns => "#{@start_column} to #{@end_column}",
            :part => sanitize_text(page.part.to_s),
@@ -328,5 +330,16 @@ class WHDebatesParser < Parser
       end
       @members = {}
       @member = nil
+    end
+    
+    def find_breakpoint(text, bound)
+      unless text.length > bound
+        return bound
+      end
+      
+      while text[bound..bound] != " "
+        bound -=1
+      end
+      bound
     end
 end
