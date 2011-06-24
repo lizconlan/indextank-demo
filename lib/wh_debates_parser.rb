@@ -70,6 +70,9 @@ class WHDebatesParser < Parser
   def parse_page(page)    
     @page += 1
     content = page.doc.xpath("//div[@id='content-small']")
+    if content.empty?
+      content = page.doc.xpath("//div[@id='maincontent1']")
+    end
     content.children.each do |child|
       if child.class == Nokogiri::XML::Element
         parse_node(child, page)
@@ -88,6 +91,14 @@ class WHDebatesParser < Parser
             else
               @end_column = node.attr("name").gsub("column_", "")
             end
+          elsif node.attr("name") =~ /column_(.*)/  #older page format
+            if @start_column == ""
+              @start_column = node.attr("name").gsub("column_", "")
+            else
+              @end_column = node.attr("name").gsub("column_", "")
+            end
+          elsif node.attr("name") =~ /^\d*$/ #older page format
+            @last_link = node.attr("name")
           end
         when "h3"
           unless @snippet.empty?
@@ -104,33 +115,46 @@ class WHDebatesParser < Parser
           if text[text.length-13..text.length-2] == "in the Chair"
             @chair = text[1..text.length-15]
           end
-        when "p"          
+        when "p" 
+          column_desc = ""
+          member_name = ""
           if node.xpath("a") and node.xpath("a").length > 0
             @last_link = node.xpath("a").last.attr("name")
           end
           unless node.xpath("b").empty?
-            member_name = node.xpath("b").text.strip
+            node.xpath("b").each do |bold|
+              if bold.text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(WH)?)(-continued)?$/  #older page format
+                if @start_column == ""
+                  @start_column = $1
+                else
+                  @end_column = $1
+                end
+                column_desc = bold.text
+              else 
+                member_name = bold.text.strip
+              end
+            end
           else
             member_name = ""
           end
           
-          text = node.text.gsub("\n", "").squeeze(" ").strip
+          text = node.text.gsub("\n", "").gsub(column_desc, "").squeeze(" ").strip
           #ignore column heading text
-          unless text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column \d+(WH)?$/            
+          unless text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column \d+(WH)?(-continued)?$/
             #check if this is a new contrib
             case member_name
-              when /^(([^\(]*) \(([^\(]*)\):)/
-                #we has a minister
-                post = $2
-                name = $3
-                member = Member.new(name, "", "", "", post)
-                handle_contribution(@member, member, page)
-                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
               when /^(([^\(]*) \(in the Chair\):)/
                 #the Chair
                 name = $2
                 post = "Debate Chair"
                 member = Member.new(name, name, "", "", post)
+                handle_contribution(@member, member, page)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              when /^(([^\(]*) \(([^\(]*)\):)/
+                #we has a minister
+                post = $2
+                name = $3
+                member = Member.new(name, "", "", "", post)
                 handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
               when /^(([^\(]*) \(([^\(]*)\) \(([^\(]*)\):)/
@@ -186,10 +210,23 @@ class WHDebatesParser < Parser
       segment_id = "#{doc_id}_wh_#{@count}"
       @count += 1
       names = []
-      @members.each { |x, y| names << y.index_name }
+      @members.each { |x, y| names << y.index_name unless names.include?(y.index_name) }
+      
+      # ##debug
+      #       p "title: #{sanitize_text("Debate: #{@subject}")}"
+      #       p "section: #{@section}"
+      #       p "volume: #{page.volume}"
+      #       p "columns: #{@start_column} to #{@end_column}"
+      #       p "part: #{sanitize_text(page.part.to_s)}"
+      #       p "members: | #{names.join(" | ")} |"
+      #       p "chair: #{@chair}"
+      #       p "subject: #{@subject}"
+      #       p "url: #{@segment_link}"      
+      #       p "text field size: #{@snippet.join(" ").size} (#{@snippet.join(" ").size/1024}k, approx)"
+      
       s.index.document(segment_id).add(
         {:title => sanitize_text("Debate: #{@subject}"),
-         :text => @snippet.join(" "),
+         :text => @snippet.join(" ")[0..100000],
          :volume => page.volume,
          :columns => "#{@start_column} to #{@end_column}",
          :part => sanitize_text(page.part.to_s),
@@ -202,10 +239,34 @@ class WHDebatesParser < Parser
          :timestamp => Time.parse(date).to_i
         }
       )
-
+      
       categories = {"house" => house, "section" => section}
       s.index.document(segment_id).update_categories(categories)
-
+      
+      if @snippet.join(" ").length > 100000
+        parent_id = segment_id
+        segment_id = "#{segment_id}__1"
+        s.index.document(segment_id).add(
+          {:title => sanitize_text("Debate: #{@subject}"),
+           :text => @snippet.join(" ")[100001..200000],
+           :volume => page.volume,
+           :columns => "#{@start_column} to #{@end_column}",
+           :part => sanitize_text(page.part.to_s),
+           :members => "| #{names.join(" | ")} |".squeeze(" "),
+           :chair => @chair,
+           :subject => @subject,
+           :url => @segment_link,
+           :parent => parent_id,
+           :house => house,
+           :section => section,
+           :timestamp => Time.parse(date).to_i
+          }
+        )
+        
+        categories = {"house" => house, "section" => section}
+        s.index.document(segment_id).update_categories(categories)
+      end
+      
       @start_column = @end_column
       
       p @subject
@@ -213,10 +274,10 @@ class WHDebatesParser < Parser
       p @segment_link
       p ""
       
-      store_member_contributions(page)
+      store_member_contributions(page, @segment_link)
     end
     
-    def store_member_contributions(page)      
+    def store_member_contributions(page, debate_link)
       p ""
       @members.keys.each do |member|
         p "storing contributions for: #{member}"
@@ -246,11 +307,18 @@ class WHDebatesParser < Parser
              :url => contribution.link,
              :house => house,
              :section => section,
-             :timestamp => Time.parse(date).to_i
+             :timestamp => Time.parse(date).to_i,
+             :debate_url => debate_link
             }
           )
 
-          categories = {"house" => house, "section" => section, "subject" => @subject, "member" => @members[member].index_name}
+          categories = {
+              "house" => house, 
+              "section" => section, 
+              "subject" => @subject, 
+              "member" => @members[member].index_name,
+              "parent" => "#{@subject}|#{debate_link}"
+            }
           s.contribs_index.document(segment_id).update_categories(categories)
 
           p "#{@members[member].index_name}, #{@subject}"

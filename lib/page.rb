@@ -10,7 +10,9 @@ class Page
     @html = response.body
     @doc = Nokogiri::HTML(@html)
     next_link = []
-    if @doc.xpath("//div[@class='navLinks'][2]").empty?
+    if @doc.xpath("//div[@class='navLinks']").empty?
+      next_link = @doc.xpath("//table").last.xpath("tr/td/a[text()='Next Section']")
+    elsif @doc.xpath("//div[@class='navLinks'][2]").empty?
       next_link = @doc.xpath("//div[@class='navLinks'][1]/div[@class='navLeft']/a")
     else
       next_link = @doc.xpath("//div[@class='navLinks'][2]/div[@class='navLeft']/a")

@@ -66,6 +66,8 @@ get "/" do
       @results = index.search(@query, @filter)
     end
     
+    @results = dedup_results(@results)
+    
     @facets = @results["facets"]
     # "search_time"=>"0.046", "facets"=>{"section"=>{"Debates and Oral Answers"=>6}, "house"=>{"Commons"=>6}, "source"=>{"Hansard"=>6}}, "matches"=>6
   end
@@ -85,4 +87,24 @@ private
     search = Search.new()
     query = "member:#{member_name}"
     search.contribs_index.search(query)
+  end
+  
+  def dedup_results(results)
+    last_id = ""
+    @results["results"].each do |result|
+      #if there's a continuation result AND its parent in the result set
+      if result["docid"] =~ /__1$/ and result["docid"].gsub("__1", "") == last_id
+        section = result["section"]
+        house = result["house"]
+        #remove the duplicate record
+        @results["results"].delete(result)
+        #decrement matches
+        @results["matches"] -= 1
+        #decrement the affected facet scores
+        @results["facets"]["house"][house] -= 1
+        @results["facets"]["section"][section] -= 1
+      end
+      last_id = result["docid"]
+    end
+    results
   end
