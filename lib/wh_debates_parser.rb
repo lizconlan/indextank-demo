@@ -49,6 +49,8 @@ class WHDebatesParser < Parser
     
     @chair = ""
     
+    @indexer = Search.new()
+    
     unless link_to_first_page
       p "No data available for this date"
     else
@@ -206,69 +208,28 @@ class WHDebatesParser < Parser
     end
     
     def store_debate(page)
-      s = Search.new()
       segment_id = "#{doc_id}_wh_#{@count}"
       @count += 1
       names = []
       @members.each { |x, y| names << y.index_name unless names.include?(y.index_name) }
       
-      # ##debug
-      #       p "title: #{sanitize_text("Debate: #{@subject}")}"
-      #       p "section: #{@section}"
-      #       p "volume: #{page.volume}"
-      #       p "columns: #{@start_column} to #{@end_column}"
-      #       p "part: #{sanitize_text(page.part.to_s)}"
-      #       p "members: | #{names.join(" | ")} |"
-      #       p "chair: #{@chair}"
-      #       p "subject: #{@subject}"
-      #       p "url: #{@segment_link}"      
-      #       p "text field size: #{@snippet.join(" ").size} (#{@snippet.join(" ").size/1024}k, approx)"
-      
-      segment_end = find_breakpoint(@snippet.join(" "), 100000)
-      
-      s.index.document(segment_id).add(
-        {:title => sanitize_text("Debate: #{@subject}"),
-         :text => @snippet.join(" ")[0..segment_end],
-         :volume => page.volume,
-         :columns => "#{@start_column} to #{@end_column}",
-         :part => sanitize_text(page.part.to_s),
-         :members => "| #{names.join(" | ")} |".squeeze(" "),
-         :chair => @chair,
-         :subject => @subject,
-         :url => @segment_link,
-         :house => house,
-         :section => section,
-         :timestamp => Time.parse(date).to_i
-        }
-      )
+      doc = {:title => sanitize_text("Debate: #{@subject}"),
+       :volume => page.volume,
+       :columns => "#{@start_column} to #{@end_column}",
+       :part => sanitize_text(page.part.to_s),
+       :members => "| #{names.join(" | ")} |".squeeze(" "),
+       :chair => @chair,
+       :subject => @subject,
+       :url => @segment_link,
+       :house => house,
+       :section => section,
+       :timestamp => Time.parse(date).to_i
+      }
       
       categories = {"house" => house, "section" => section}
-      s.index.document(segment_id).update_categories(categories)
       
-      if @snippet.join(" ").length > 100000
-        parent_id = segment_id
-        segment_id = "#{segment_id}__1"
-        s.index.document(segment_id).add(
-          {:title => sanitize_text("Debate: #{@subject}"),
-           :text => @snippet.join(" ")[segment_end+1..@snippet.join(" ").length],
-           :volume => page.volume,
-           :columns => "#{@start_column} to #{@end_column}",
-           :part => sanitize_text(page.part.to_s),
-           :members => "| #{names.join(" | ")} |".squeeze(" "),
-           :chair => @chair,
-           :subject => @subject,
-           :url => @segment_link,
-           :parent => parent_id,
-           :house => house,
-           :section => section,
-           :timestamp => Time.parse(date).to_i
-          }
-        )
-        
-        categories = {"house" => house, "section" => section}
-        s.index.document(segment_id).update_categories(categories)
-      end
-      
+      @indexer.add_document(segment_id, doc, @snippet.join(" "), categories, "idx")
+
       @start_column = @end_column
       
       p @subject
@@ -284,7 +245,6 @@ class WHDebatesParser < Parser
       @members.keys.each do |member|
         p "storing contributions for: #{member}"
         @members[member].contributions.each do |contribution|
-          s = Search.new()
           segment_id = "#{doc_id}_wh_contribution_#{@contribution_count}"
           @contribution_count += 1
       
@@ -294,13 +254,11 @@ class WHDebatesParser < Parser
           else
             column_text = "#{contribution.start_column} to #{contribution.end_column}"
           end
-      
-          s.contribs_index.document(segment_id).add(
-            {:title => sanitize_text("#{@subject}"),
+          
+          doc = {:title => sanitize_text("#{@subject}"),
              :member => @members[member].index_name,
              :constituency => @members[member].constituency,
              :post => @members[member].post,
-             :text => contribution.segments.join(" "),
              :volume => page.volume,
              :columns => column_text,
              :part => sanitize_text(page.part.to_s),
@@ -312,7 +270,6 @@ class WHDebatesParser < Parser
              :timestamp => Time.parse(date).to_i,
              :debate_url => debate_link
             }
-          )
 
           categories = {
               "house" => house, 
@@ -321,7 +278,8 @@ class WHDebatesParser < Parser
               "member" => @members[member].index_name,
               "parent" => "#{@subject}|#{debate_link}"
             }
-          s.contribs_index.document(segment_id).update_categories(categories)
+            
+          @indexer.add_document(segment_id, doc, contribution.segments.join(" "), categories, "contributions")
 
           p "#{@members[member].index_name}, #{@subject}"
           p segment_id
@@ -331,15 +289,5 @@ class WHDebatesParser < Parser
       @members = {}
       @member = nil
     end
-    
-    def find_breakpoint(text, bound)
-      unless text.length > bound
-        return bound
-      end
-      
-      while text[bound..bound] != " "
-        bound -=1
-      end
-      bound
-    end
+
 end
