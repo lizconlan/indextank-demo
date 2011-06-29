@@ -52,7 +52,7 @@ class WHDebatesParser < Parser
     @indexer = Search.new()
     
     unless link_to_first_page
-      p "No data available for this date"
+      warn "No Westminster Hall data available for this date"
     else
       page = Page.new(link_to_first_page)
       parse_page(page)
@@ -62,7 +62,7 @@ class WHDebatesParser < Parser
       end
     
       #flush the buffer
-      unless @snippet.empty?
+      unless @snippet.empty? or @snippet.join("").length == 0
         store_debate(page)
         @snippet = []
       end
@@ -103,7 +103,7 @@ class WHDebatesParser < Parser
             @last_link = node.attr("name")
           end
         when "h3"
-          unless @snippet.empty?
+          unless @snippet.empty? or @snippet.join("").length == 0
             store_debate(page)
             @snippet = []
             @segment_link = ""
