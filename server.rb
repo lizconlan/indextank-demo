@@ -91,20 +91,27 @@ private
   
   def dedup_results(results)
     for_deletion = []
+    possible_duplicates = []
     
     all_ids = results["results"].collect { |x| x["docid"] }
     results["results"].each do |result|
-      #if there's a continuation result AND its parent in the result set
-      if result["docid"] =~ /(__\d+)$/ and all_ids.include?(result["docid"].gsub($1, ""))
-        section = result["section"]
-        house = result["house"]
-        #flag the duplicate record for deletion
-        for_deletion << result["docid"]
-        #decrement matches
-        results["matches"] -= 1
-        #decrement the affected facet scores
-        results["facets"]["house"][house] -= 1
-        results["facets"]["section"][section] -= 1
+      #if there's a continuation result
+      if result["docid"] =~ /(__\d+)$/
+        suffix = $1
+        #...and its parent is also in the result set (or a more relevant sibling has already been found)
+        if all_ids.include?(result["docid"].gsub(suffix, "")) or possible_duplicates.include?(result["docid"].gsub(suffix, ""))
+          #harvest the facet data
+          section = result["section"]
+          house = result["house"]
+          #flag the duplicate record for deletion
+          for_deletion << result["docid"]
+          #decrement matches
+          results["matches"] -= 1
+          #decrement the affected facet scores
+          results["facets"]["house"][house] -= 1
+          results["facets"]["section"][section] -= 1
+        end
+        possible_duplicates << result["docid"].gsub(suffix, "")
       end
     end
     #delete the unwanted records (if applicable)
