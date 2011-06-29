@@ -1,6 +1,6 @@
 require 'lib/parser'
 require 'lib/page'
-require 'lib/test'
+require 'lib/search'
 require 'lib/member'
 
 class WHDebatesParser < Parser

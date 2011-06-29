@@ -1,5 +1,5 @@
 require 'sinatra'
-require 'lib/test'
+require 'lib/search'
 
 helpers do
   include Rack::Utils
