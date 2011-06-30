@@ -19,18 +19,24 @@
             &nbsp;or&nbsp;
           - elsif suggestion != @suggestions.last
             ,&nbsp
-  - elsif @member
-    - if @query == ""
-      Hansard entries featuring contributions by
-      %strong #{h(@member.gsub("+", " "))}
+  -else
+    %p
+      - if @results["matches"] == 1
+        Showing 1 result
+      - else
+        Showing #{@offset+1} to #{@last_record} of about #{@results["matches"]} results
+    - if @member
+      - if @query == ""
+        Hansard entries featuring contributions by
+        %strong #{h(@member.gsub("+", " "))}
+      - else
+        Hansard entries containing
+        %strong #{h(@query)}
+        that feature contributions by
+        %strong #{h(@member.gsub("+", " "))}
     - else
       Hansard entries containing
       %strong #{h(@query)}
-      that feature contributions by
-      %strong #{h(@member.gsub("+", " "))}
-  - else
-    Hansard entries containing
-    %strong #{h(@query)}
     
   - unless @filter.empty?
     #filter

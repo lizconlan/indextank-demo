@@ -24,7 +24,16 @@ end
 
 get "/" do
   @query = params[:q]
+  @page = params[:p].to_i
   @suggestions = []
+  
+  @page = 1 if @page < 1
+  
+  #the default for IndexTank, can be changed (I think)
+  #not currently specified, relying on default value
+  @page_size = 10
+  
+  @offset = (@page-1)*@page_size
   
   @filter = {}
   
@@ -43,7 +52,7 @@ get "/" do
     end
     
     if @member
-      @results = do_member_debates_search(@member, @query)
+      @results = do_member_debates_search(@member, @query, @offset)
       if @results["matches"] == 0 and @query == ""
         surname = @member.split("+").last
         firstname = @member.split("+").first
@@ -63,10 +72,14 @@ get "/" do
       end
     else
       index = Search.new()
-      @results = index.search(@query, @filter)
+      @results = index.search(@query, @filter, @offset)
     end
     
     @results = dedup_results(@results)
+    @last_record = @offset + @page_size
+    if @results["matches"] < @last_record
+      @last_record = @results["matches"]
+    end
     
     @facets = @results["facets"]
     # "search_time"=>"0.046", "facets"=>{"section"=>{"Debates and Oral Answers"=>6}, "house"=>{"Commons"=>6}, "source"=>{"Hansard"=>6}}, "matches"=>6
@@ -75,12 +88,12 @@ get "/" do
 end
 
 private
-  def do_member_debates_search(member_name, rest_of_query="")
+  def do_member_debates_search(member_name, rest_of_query="", offset=0)
     search = Search.new()
     query = "members:#{member_name}"
     query = "#{query} text:#{rest_of_query}" unless rest_of_query == ""
     search.index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house',
-       :category_filters => @filter)
+       :category_filters => @filter, :start => offset)
   end
   
   def do_member_contributions_search(member_name)

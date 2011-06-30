@@ -19,7 +19,7 @@ class Search
     @contribs_index = @client.indexes('contributions')
   end
     
-  def search(query, filter={})
+  def search(query, filter={}, offset=0)
     # adapted from reddit codebase
     # we may use ':' for something specific later
     special_characters = ['+', "'", '-', '&', '|', '!', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', ':', '\\']
@@ -29,11 +29,11 @@ class Search
     
     if filter[:member]
       contribs_index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house,timestamp', 
-        :category_filters => filter
+        :category_filters => filter, :start => offset
       )
     else
       index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house,timestamp', 
-        :category_filters => filter
+        :category_filters => filter, :start => offset
       )
     end
   end
