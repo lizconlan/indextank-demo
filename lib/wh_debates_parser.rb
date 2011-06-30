@@ -1,7 +1,7 @@
 require 'lib/parser'
-require 'lib/page'
 require 'lib/search'
-require 'lib/member'
+require 'models/page'
+require 'models/member'
 
 class WHDebatesParser < Parser
   attr_reader :section

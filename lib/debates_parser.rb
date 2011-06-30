@@ -1,6 +1,6 @@
 require 'lib/parser'
-require 'lib/page'
 require 'lib/search'
+require 'models/page'
 
 class DebatesParser < Parser
   attr_reader :section
