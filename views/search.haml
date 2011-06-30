@@ -1,5 +1,5 @@
 %form#search
-  %input{:name => "q", :value => h(params[:q])}
+  %input{:name => "q", :value => params[:q]}
   %input{:type => "submit", :value => "Search"}
   
 -if @results
