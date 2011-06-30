@@ -12,11 +12,7 @@ class WHDebatesParser < Parser
   end
   
   def get_section_index
-    url = get_section_links[section]
-    if url
-      response = RestClient.get(url)
-      return response.body
-    end
+    super(section)
   end
   
   def link_to_first_page
@@ -52,7 +48,7 @@ class WHDebatesParser < Parser
     @indexer = Search.new()
     
     unless link_to_first_page
-      warn "No Westminster Hall data available for this date"
+      warn "No #{section} data available for this date"
     else
       page = Page.new(link_to_first_page)
       parse_page(page)

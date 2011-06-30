@@ -12,6 +12,14 @@ class Parser
     @doc_id = "#{date}_hansard_#{house[0..0].downcase()}"
   end
   
+  def get_section_index(section)
+    url = get_section_links[section]
+    if url
+      response = RestClient.get(url)
+      return response.body
+    end
+  end
+  
   def get_section_links
     parse_date = Date.parse(date)
     index_page = "http://www.parliament.uk/business/publications/hansard/#{house.downcase()}/by-date/?d=#{parse_date.day}&m=#{parse_date.month}&y=#{parse_date.year}"
