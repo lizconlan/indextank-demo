@@ -1,0 +1,6 @@
+.pagination
+  - if @start > 9 
+    %a{:href => "/?q=#{params[:q]}&p=#{@page-1}", :rel => "Previous"} &lt;&lt Prev
+  
+  - if @results["matches"] > @start + @page_size
+    %a{:href => "/?q=#{params[:q]}&p=#{@page+1}", :rel => "Next", :class => "right_link"} Next &gt;&gt;

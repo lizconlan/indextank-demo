@@ -1,0 +1,8 @@
+.info
+  - if @results["matches"] == 1
+    Showing 1 result
+  - else
+    Showing #{@start+1} to #{@last_record} of 
+    - if @results["matches"] > @start + @page_size
+      about
+    #{@results["matches"]} results

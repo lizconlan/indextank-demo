@@ -21,10 +21,7 @@
             ,&nbsp
   -else
     %p
-      - if @results["matches"] == 1
-        Showing 1 result
-      - else
-        Showing #{@offset+1} to #{@last_record} of about #{@results["matches"]} results
+      =haml :_info
     - if @member
       - if @query == ""
         Hansard entries featuring contributions by
@@ -73,3 +70,5 @@
           %span.abstract= result["snippet_text"]
           %br
         %span.url= format_url(result["url"])
+  - unless @results["results"].empty?
+    =haml :_pagination

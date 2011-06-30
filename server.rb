@@ -33,7 +33,7 @@ get "/" do
   #not currently specified, relying on default value
   @page_size = 10
   
-  @offset = (@page-1)*@page_size
+  @start = (@page-1)*@page_size
   
   @filter = {}
   
@@ -52,7 +52,7 @@ get "/" do
     end
     
     if @member
-      @results = do_member_debates_search(@member, @query, @offset)
+      @results = do_member_debates_search(@member, @query, @start)
       if @results["matches"] == 0 and @query == ""
         surname = @member.split("+").last
         firstname = @member.split("+").first
@@ -72,11 +72,11 @@ get "/" do
       end
     else
       index = Search.new()
-      @results = index.search(@query, @filter, @offset)
+      @results = index.search(@query, @filter, @start)
     end
     
     @results = dedup_results(@results)
-    @last_record = @offset + @page_size
+    @last_record = @start + @page_size
     if @results["matches"] < @last_record
       @last_record = @results["matches"]
     end
