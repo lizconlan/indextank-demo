@@ -1,22 +1,25 @@
-require 'rubygems'
 require 'indextank'
 require 'yaml'
+
+require 'models/catalogue'
 
 class Search
   attr_reader :index, :contribs_index
   
   def initialize
     indextank_url = ""
+
     if ENV['RACK_ENV'] && ENV['RACK_ENV'] == 'production' #heroku
       indextank_url = ENV['indextank_url']
     else
       yql_conf = YAML.load(File.read('config/indextank.yml'))      
       indextank_url = yql_conf[:private_url]
     end
-    
+
     @client = IndexTank::Client.new(indextank_url)
     @index = @client.indexes('idx')
     @contribs_index = @client.indexes('contributions')
+    @cat = Catalogue.new()
   end
     
   def search(query, filter={}, offset=0)
@@ -41,7 +44,12 @@ class Search
     store = @client.indexes(index_name)
   
     if text
-      if text.length < 100000
+      #add date and section data to Mongo if it's not already there
+      if @cat.find('{"pubdate":"' + doc_id[0..9].gsub("-", "/") + '", "section":"' + categories["section"] + '"}') == []
+        @cat.add({"pubdate" => doc_id[0..9].gsub("-", "/"), "section" => categories["section"]})
+      end
+      
+      if text.length < 100000  
         doc[:text] = text
         store.document(doc_id).add(doc)
         store.document(doc_id).update_categories(categories)
