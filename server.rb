@@ -92,14 +92,14 @@ private
     search = Search.new()
     query = "members:#{member_name}"
     query = "#{query} text:#{rest_of_query}" unless rest_of_query == ""
-    search.index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house',
+    search.index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house,timestamp',
        :category_filters => @filter, :start => offset)
   end
   
   def do_member_contributions_search(member_name)
     search = Search.new()
     query = "member:#{member_name}"
-    search.contribs_index.search(query)
+    search.contribs_index.search(query, :fetch => 'title,url,part,volume,columns,chair,section,house,timestamp')
   end
   
   def dedup_results(results)
