@@ -15,19 +15,6 @@ class WHDebatesParser < Parser
     super(section)
   end
   
-  def link_to_first_page
-    html = get_section_index
-    return nil unless html
-    doc = Nokogiri::HTML(html)
-    
-    content_section = doc.xpath("//div[@id='content-small']/p[3]/a")
-    if content_section.empty?
-      content_section = doc.xpath("//div[@id='maincontent1']/div/a[1]")
-    end
-    relative_path = content_section.attr("href").value.to_s
-    "http://www.publications.parliament.uk#{relative_path[0..relative_path.rindex("#")-1]}"
-  end
-  
   def parse_pages
     @page = 0
     @count = 0
@@ -61,19 +48,6 @@ class WHDebatesParser < Parser
       unless @snippet.empty? or @snippet.join("").length == 0
         store_debate(page)
         @snippet = []
-      end
-    end
-  end
-  
-  def parse_page(page)    
-    @page += 1
-    content = page.doc.xpath("//div[@id='content-small']")
-    if content.empty?
-      content = page.doc.xpath("//div[@id='maincontent1']")
-    end
-    content.children.each do |child|
-      if child.class == Nokogiri::XML::Element
-        parse_node(child, page)
       end
     end
   end
@@ -121,7 +95,7 @@ class WHDebatesParser < Parser
           end
           unless node.xpath("b").empty?
             node.xpath("b").each do |bold|
-              if bold.text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(WH)?)(-continued)?$/  #older page format
+              if bold.text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W)?)(?:-continued)?$/  #older page format
                 if @start_column == ""
                   @start_column = $1
                 else
@@ -138,7 +112,7 @@ class WHDebatesParser < Parser
           
           text = node.text.gsub("\n", "").gsub(column_desc, "").squeeze(" ").strip
           #ignore column heading text
-          unless text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column \d+(WH)?(-continued)?$/
+          unless text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W)?)(?:-continued)?$/
             #check if this is a new contrib
             case member_name
               when /^(([^\(]*) \(in the Chair\):)/
@@ -204,36 +178,47 @@ class WHDebatesParser < Parser
     end
     
     def store_debate(page)
-      segment_id = "#{doc_id}_wh_#{@count}"
-      @count += 1
-      names = []
-      @members.each { |x, y| names << y.index_name unless names.include?(y.index_name) }
+      handle_contribution(@member, @member, page)
       
-      doc = {:title => sanitize_text("Debate: #{@subject}"),
-       :volume => page.volume,
-       :columns => "#{@start_column} to #{@end_column}",
-       :part => sanitize_text(page.part.to_s),
-       :members => "| #{names.join(" | ")} |".squeeze(" "),
-       :chair => @chair,
-       :subject => @subject,
-       :url => @segment_link,
-       :house => house,
-       :section => section,
-       :timestamp => Time.parse(date).to_i
-      }
+      if @segment_link #no point storing pointers that don't link back to the source
+        segment_id = "#{doc_id}_wh_#{@count}"
+        @count += 1
+        names = []
+        @members.each { |x, y| names << y.index_name unless names.include?(y.index_name) }
       
-      categories = {"house" => house, "section" => section}
+        column_text = ""
+        if @start_column == @end_column or @end_column == ""
+          column_text = @start_column
+        else
+          column_text = "#{@start_column} to #{@end_column}"
+        end
       
-      @indexer.add_document(segment_id, doc, @snippet.join(" "), categories, "idx")
+        doc = {:title => sanitize_text("Debate: #{@subject}"),
+         :volume => page.volume,
+         :columns => column_text,
+         :part => sanitize_text(page.part.to_s),
+         :members => "| #{names.join(" | ")} |".squeeze(" "),
+         :chair => @chair,
+         :subject => @subject,
+         :url => @segment_link,
+         :house => house,
+         :section => section,
+         :timestamp => Time.parse(date).to_i
+        }
+            
+        categories = {"house" => house, "section" => section}
+      
+        @indexer.add_document(segment_id, doc, @snippet.join(" "), categories, "idx")
 
-      @start_column = @end_column
+        @start_column = @end_column
       
-      p @subject
-      p segment_id
-      p @segment_link
-      p ""
+        p @subject
+        p segment_id
+        p @segment_link
+        p ""
       
-      store_member_contributions(page, @segment_link)
+        store_member_contributions(page, @segment_link)
+      end
     end
     
     def store_member_contributions(page, debate_link)
@@ -245,13 +230,14 @@ class WHDebatesParser < Parser
           @contribution_count += 1
       
           column_text = ""
-          if contribution.start_column == contribution.end_column
+          if contribution.start_column == contribution.end_column or contribution.end_column == ""
             column_text = contribution.start_column
           else
             column_text = "#{contribution.start_column} to #{contribution.end_column}"
           end
           
           doc = {:title => sanitize_text("#{@subject}"),
+             :timestamp => Time.parse(date).to_i,
              :member => @members[member].index_name,
              :constituency => @members[member].constituency,
              :post => @members[member].post,
@@ -263,10 +249,9 @@ class WHDebatesParser < Parser
              :url => contribution.link,
              :house => house,
              :section => section,
-             :timestamp => Time.parse(date).to_i,
              :debate_url => debate_link
             }
-
+            
           categories = {
               "house" => house, 
               "section" => section, 

@@ -6,6 +6,8 @@ require 'time'
 class Parser
   attr_reader :date, :doc_id, :house
   
+  COLUMN_HEADER = /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W))(?:-continued)?$/
+  
   def initialize(date, house="Commons")
     @date = date
     @house = house
@@ -37,6 +39,32 @@ class Parser
     end
   
     urls
+  end
+  
+  def link_to_first_page
+    html = get_section_index
+    return nil unless html
+    doc = Nokogiri::HTML(html)
+    
+    content_section = doc.xpath("//div[@id='content-small']/p[3]/a")
+    if content_section.empty?
+      content_section = doc.xpath("//div[@id='maincontent1']/div/a[1]")
+    end
+    relative_path = content_section.attr("href").value.to_s
+    "http://www.publications.parliament.uk#{relative_path[0..relative_path.rindex("#")-1]}"
+  end
+  
+  def parse_page(page)    
+    @page += 1
+    content = page.doc.xpath("//div[@id='content-small']")
+    if content.empty?
+      content = page.doc.xpath("//div[@id='maincontent1']")
+    end
+    content.children.each do |child|
+      if child.class == Nokogiri::XML::Element
+        parse_node(child, page)
+      end
+    end
   end
   
   private

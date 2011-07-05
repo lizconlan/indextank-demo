@@ -51,6 +51,7 @@ class Search
       
       if text.length < 100000  
         doc[:text] = text
+                
         store.document(doc_id).add(doc)
         store.document(doc_id).update_categories(categories)
         p "stored #{doc_id}"
@@ -67,7 +68,7 @@ class Search
           segment_end = find_breakpoint(text, 100000)
           doc[:text] = text[0..segment_end]
           segment_id = "#{doc_id}__#{count}"
-        
+          
           store.document(segment_id).add(doc)
           store.document(segment_id).update_categories(categories)
           p "stored #{segment_id}"
