@@ -73,6 +73,29 @@ class Parser
   end
   
   private
+    def handle_contribution(member, new_member, page)
+      if @contribution and member
+        unless @members.keys.include?(member.search_name)
+          @members[member.search_name] = member
+        end
+        @contribution.end_column = @end_column
+        @members[member.search_name].contributions << @contribution
+      end
+      if @end_column == ""
+        @contribution = Contribution.new("#{page.url}\##{@last_link}", @start_column)
+      else
+        @contribution = Contribution.new("#{page.url}\##{@last_link}", @end_column)
+      end
+      if new_member
+        if @members.keys.include?(new_member.search_name)
+          new_member = @members[new_member.search_name]
+        else
+          @members[new_member.search_name] = new_member
+        end
+        @member = new_member
+      end
+    end
+    
     def sanitize_text(text)
       text = text.gsub("\342\200\230", "'")
       text = text.gsub("\342\200\231", "'")
