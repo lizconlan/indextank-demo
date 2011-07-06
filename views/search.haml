@@ -61,10 +61,13 @@
         %span.title
           %a.section{:href => result["url"]}= result["title"]
         %br
-        - if result["section"] == "Westminster Hall"
-          %span.description= "<strong>Westminster Hall</strong> &mdash; #{result["chair"]} in the Chair"
+        - unless display_section(result["section"]) == ""
+          %span.description= display_section(result["section"], result["chair"])
           %br
-        %span.description= "<strong>#{Time.at(result["timestamp"].to_i).utc.strftime("%d %b %Y")}</strong> &mdash; #{result["house"]} Hansard Vol #{result["volume"]}; Part #{result["part"]}; Cols #{result["columns"]}"
+        %span.description
+          %strong
+            =display_time(result["timestamp"])
+          ="&mdash; #{result["house"]} Hansard Vol #{result["volume"]}; Part #{result["part"]}; Cols #{result["columns"]}"
         %br
         - if result["snippet_text"] != ""
           %span.abstract= result["snippet_text"]

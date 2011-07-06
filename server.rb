@@ -1,9 +1,11 @@
 require 'sinatra'
+require 'time'
 require 'lib/search'
 
 helpers do
   include Rack::Utils
   alias_method :h, :escape_html
+  
   def format_url(url)
     url = url[url.index("//")+2..url.length]
     if url.rindex("#") and url.rindex("/") and url.rindex("#") > url.rindex("/")
@@ -12,9 +14,21 @@ helpers do
     if url.length > 50
       parts = url.split("/")
       url = "<strong class='highlight'>#{parts[0]}</strong>/#{parts[1]}/#{parts[2]}/&hellip;/#{parts.last}"
-
     end
     url
+  end
+  
+  def display_section(section, chair="")
+    case section
+      when "Westminster Hall"
+        "<strong>Westminster Hall</strong> &mdash; #{chair} in the Chair"
+      else
+        "<strong>#{section}</strong>"
+    end
+  end
+  
+  def display_time(timestamp)
+    Time.at(timestamp.to_i + 7200).utc.strftime("%d %b %Y")
   end
 end
 
