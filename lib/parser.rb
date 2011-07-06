@@ -48,6 +48,9 @@ class Parser
     
     content_section = doc.xpath("//div[@id='content-small']/p[3]/a")
     if content_section.empty?
+      content_section = doc.xpath("//div[@id='content-small']/table/tr/td[1]/p[3]/a[1]")
+    end
+    if content_section.empty?
       content_section = doc.xpath("//div[@id='maincontent1']/div/a[1]")
     end
     relative_path = content_section.attr("href").value.to_s
@@ -59,6 +62,8 @@ class Parser
     content = page.doc.xpath("//div[@id='content-small']")
     if content.empty?
       content = page.doc.xpath("//div[@id='maincontent1']")
+    elsif content.children.size < 10
+      content = page.doc.xpath("//div[@id='content-small']/table/tr/td[1]")
     end
     content.children.each do |child|
       if child.class == Nokogiri::XML::Element
