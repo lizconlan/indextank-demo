@@ -6,13 +6,13 @@ require 'models/member'
 class WMSParser < Parser
   attr_reader :section
   
-  def initialize(date, house="Commons", section="Written Statements")
+  def initialize(date, house="Commons", section="Written Ministerial Statements")
     super(date, house)
     @section = section
   end
   
   def get_section_index
-    super(section)
+    super("Written Statements")
   end
   
   def parse_pages
