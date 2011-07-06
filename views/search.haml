@@ -1,5 +1,5 @@
 %form#search
-  %input{:name => "q", :value => params[:q]}
+  %input{:name => "q", :value => params[:q], "x-webkit-speech" => ""}
   %input{:type => "submit", :value => "Search"}
   
 -if @results
@@ -46,14 +46,7 @@
       %a.filter{:href => "?q=#{@query}"} [Show all]
       %br
   - else
-    -if @facets["section"] and @facets["section"].length > 1
-      #facets
-        %h3 Sections
-        %ul#sections
-          -@facets["section"].each do |facet_key|
-            %li.section
-              %a{:href => "?q=#{params[:q]}&cat=section&val=#{facet_key[0]}"}
-                ="#{facet_key[0]} (#{facet_key[1]})"
+    =haml :_facets
       
   #results
     -@results["results"].each do |result|

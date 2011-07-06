@@ -1,0 +1,8 @@
+-if @facets["section"] and @facets["section"].length > 1
+  #facets
+    %h3 Sections
+    %ul#sections
+      -@facets["section"].each do |facet_key|
+        %li.section
+          %a{:href => "?q=#{params[:q]}&cat=section&val=#{facet_key[0]}"}
+            ="#{facet_key[0]} (#{facet_key[1]})"
