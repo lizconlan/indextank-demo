@@ -55,8 +55,12 @@ get "/" do
   
   @filter = {}
   
-  if params[:cat] and params[:val] and params[:cat].strip != "" and params[:val].strip != ""
-    @filter[params[:cat]] = params[:val]
+  if params[:f]
+    pairs = params[:f].split("^")
+    pairs.each do |pair|
+      filter = pair.split("|")
+      @filter[filter[0]] = filter[1]
+    end
   end
   
   if @query and @query.strip != ""

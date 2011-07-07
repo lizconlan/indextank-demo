@@ -4,5 +4,5 @@
     %ul#sections
       -@facets["section"].each do |facet_key|
         %li.section
-          %a{:href => "?q=#{params[:q]}&cat=section&val=#{facet_key[0]}"}
+          %a{:href => "?q=#{params[:q]}&f=section%7c#{facet_key[0]}"}
             ="#{facet_key[0]} (#{facet_key[1]})"
