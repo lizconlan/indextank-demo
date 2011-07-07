@@ -35,17 +35,7 @@
       Hansard entries containing
       %strong #{h(@query)}
     
-  - unless @filter.empty?
-    #filter
-      Showing only results from 
-      - if @filter[:member]
-        contributions by
-        %strong #{h(@filter[:member])}
-      - else
-        %strong #{h(params[:val])}.
-      %a.filter{:href => "?q=#{@query}"} [Show all]
-      %br
-  - else
+  - if @filter.empty?
     =haml :_facets
       
   #results

@@ -6,3 +6,11 @@
     - if @results["matches"] > @start + @page_size
       about
     #{@results["matches"]} results
+  - unless @filter.empty?
+    from 
+    - if @filter[:member]
+      contributions by
+      %strong #{h(@filter[:member])}
+    - else
+      %strong #{h(params[:val])}
+    %a.filter{:href => "?q=#{@query}"} [Show all]
