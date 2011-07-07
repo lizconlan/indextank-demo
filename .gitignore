@@ -2,3 +2,4 @@
 .DS_Store
 config/indextank.yml
 config/mongohq.yml
+.sass-cache/

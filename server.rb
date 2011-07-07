@@ -36,6 +36,10 @@ get "/favicon.ico" do
   status 404
 end
 
+get "/style/main.css" do
+  sass :"/style/main"
+end
+
 get "/" do
   @query = params[:q]
   @page = params[:p].to_i
