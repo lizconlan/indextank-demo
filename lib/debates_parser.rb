@@ -1,6 +1,7 @@
 require 'lib/parser'
 require 'lib/search'
 require 'models/page'
+require 'models/member'
 
 class DebatesParser < Parser
   attr_reader :section
@@ -11,71 +12,45 @@ class DebatesParser < Parser
   end
   
   def get_section_index
-    url = get_section_links[section]
-    if url
-      response = RestClient.get(url)
-      return response.body
-    end
-  end
-  
-  def link_to_first_page
-    html = get_section_index
-    return nil unless html
-    doc = Nokogiri::HTML(html)
-    
-    relative_path = doc.xpath("//div[@id='content-small']/p[3]/a").attr("href").value.to_s
-    "http://www.publications.parliament.uk#{relative_path[0..relative_path.rindex("#")-1]}"
+    super(section)
   end
   
   def parse_pages
     @column = ""
     @page = 0
+    @contribution_count = 0
     
-    page = Page.new(link_to_first_page)
-    parse_page(page)
-    while page.next_url
-      page = Page.new(page.next_url)
-      parse_page(page)
-    end
-  end
-  
-  def parse_page(page)
-    @snippet_type = ""
-    @link = ""
-    @topics = []
-    @departments = []
+    @members = {}
+    @member = nil
+    @contribution = nil
+    
+    @last_link = ""
     @snippet = []
-    @speakers = []
-    @snippets = []
+    @subject = ""
+    @department = ""
+    @departments = []
+    @start_column = ""
+    @end_column = ""
     @questions = []
     
-    @page += 1
-    content = page.doc.xpath("//div[@id='content-small']")
-    content.children.each do |child|
-      if child.class == Nokogiri::XML::Element
-        parse_node(child)
+    @indexer = Search.new()
+    
+    unless link_to_first_page
+      warn "No #{section} data available for this date"
+    else
+      page = Page.new(link_to_first_page)
+      parse_page(page)
+      while page.next_url
+        page = Page.new(page.next_url)
+        parse_page(page)
+      end
+    
+      #flush the buffer
+      unless @snippet.empty? or @snippet.join("").length == 0
+        store_debate(page)
+        @snippet = []
       end
     end
-    
-    s = Search.new()
-    segment_id = "#{doc_id}_#{section.downcase().gsub(" ", "-")}_#{@page}"
-    s.index.document(segment_id).add(
-      {:title => sanitize_text(page.title),
-       :text => @snippets.join(" "),
-       :volume => page.volume,
-       :columns => "#{page.start_column} to #{page.end_column}",
-       :part => sanitize_text(page.part.to_s),
-       :url => page.url,
-       :house => house,
-       :section => section,
-       :timestamp => Time.parse(date).to_i
-      }
-    )
-    
-    categories = {"house" => house, "source" => "Hansard", "section" => section}
-    s.index.document(segment_id).update_categories(categories)
-    
-    p segment_id
   end
   
   private
@@ -106,7 +81,7 @@ class DebatesParser < Parser
                 @snippet_type = "department heading"
                 @link = node.attr("name")
               when /^subhd_/
-                @snippet_type = "subheading" #if we're lucky it's a topic
+                @snippet_type = "subject heading"
                 @link = node.attr("name")
               when /^qn_/
                 @snippet_type = "question"
