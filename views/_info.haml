@@ -12,5 +12,5 @@
       contributions by
       %strong #{h(@filter[:member])}
     - else
-      %strong #{h(params[:val])}
+      %strong #{h(@filter["section"])}
     %a.filter{:href => "?q=#{@query}"} [Show all]
