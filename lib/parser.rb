@@ -6,7 +6,7 @@ require 'time'
 class Parser
   attr_reader :date, :doc_id, :house
   
-  COLUMN_HEADER = /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W))(?:-continued)?$/
+  COLUMN_HEADER = /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W)?)(?:-continued)?$/
   
   def initialize(date, house="Commons")
     @date = date
