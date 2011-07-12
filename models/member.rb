@@ -3,12 +3,16 @@ class Member
   attr_accessor :contributions
   
   def initialize(name, search_name="", constituency="", party="", post="")
-    if search_name == ""
-      @search_name = format_search_name(name)
-      @index_name = format_index_name(name)
+    if name =~ / Speaker$/
+      @search_name, @index_name = name
     else
-      @search_name = name
-      @index_name = format_index_name(name)
+      if search_name == ""
+        @search_name = format_search_name(name)
+        @index_name = format_index_name(name)
+      else
+        @search_name = name
+        @index_name = format_index_name(name)
+      end
     end
     @name = name
     @constituency = constituency
