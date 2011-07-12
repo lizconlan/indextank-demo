@@ -18,6 +18,7 @@ class DebatesParser < Parser
   def parse_pages
     @column = ""
     @page = 0
+    @count = 0
     @contribution_count = 0
     
     @members = {}
@@ -28,10 +29,12 @@ class DebatesParser < Parser
     @snippet = []
     @subject = ""
     @department = ""
-    @departments = []
     @start_column = ""
     @end_column = ""
     @questions = []
+    @petitions = []
+    
+    @subsection = ""
     
     @indexer = Search.new()
     
@@ -49,74 +52,233 @@ class DebatesParser < Parser
       unless @snippet.empty? or @snippet.join("").length == 0
         store_debate(page)
         @snippet = []
+        @questions = []
+        @petitions = []
       end
     end
   end
   
   private
-    def parse_node(node)
+    def parse_node(node, page)
       case node.name
         when "a"
+          @last_link = node.attr("name") if node.attr("class") == "anchor"
           if node.attr("class") == "anchor-column"
-            @column = node.attr("name").gsub("column_", "")
-            @link = node.attr("name")
-            @snippet_type = "column heading"
-          else
-            unless @snippet == []
-              @snippets << @snippet.join(" ")
-              @snippet = []
+            if @start_column == ""
+              @start_column = node.attr("name").gsub("column_", "")
+            else
+              @end_column = node.attr("name").gsub("column_", "")
             end
-            case node.attr("name")
-              when /^hd_/
-                #heading e.g. the date, The House met at..., The Deputy PM was asked
-                @snippet_type = "heading"
-                @link = node.attr("name")
-              when /^place_/
-                @snippet_type = "location heading"
-                @link = node.attr("name")
-              when /^oralhd_/
-                @snippet_type = "question heading"
-                @link = node.attr("name")
-              when /^depthd_/
-                @snippet_type = "department heading"
-                @link = node.attr("name")
-              when /^subhd_/
-                @snippet_type = "subject heading"
-                @link = node.attr("name")
-              when /^qn_/
-                @snippet_type = "question"
-                @link = node.attr("name")
-              when /^st_/
-                @snippet_type = "contribution"
-                @link = node.attr("name")
+          elsif node.attr("name") =~ /column_(.*)/  #older page format
+            if @start_column == ""
+              @start_column = node.attr("name").gsub("column_", "")
+            else
+              @end_column = node.attr("name").gsub("column_", "")
             end
+          elsif node.attr("name") =~ /^\d*$/ #older page format
+            @last_link = node.attr("name")
+          end
+          case node.attr("name")
+            when /^hd_/
+              #heading e.g. the date, The House met at..., The Deputy PM was asked
+              @snippet_type = "heading"
+              @link = node.attr("name")
+            when /^place_/
+              @snippet_type = "location heading"
+              @link = node.attr("name")
+            when /^dpthd_/
+              @snippet_type = "department heading"
+              @link = node.attr("name")
+            when /^subhd_/
+              @snippet_type = "subject heading"
+              @link = node.attr("name")
+            when /^qn_/
+              @snippet_type = "question"
+              @link = node.attr("name")
+            when /^st_/
+              @snippet_type = "contribution"
+              @link = node.attr("name")
           end
         when "h2"
           text = node.text.gsub("\n", "").squeeze(" ").strip
           @snippet << sanitize_text(text)
+          if text == "Oral Answers to Questions"
+            @subsection = "Oral Answer"
+          end
         when "h3"
           text = node.text.gsub("\n", "").squeeze(" ").strip
-          @snippet << sanitize_text(text)
-          if @snippet_type == "department heading"
-            @departments << sanitize_text(text)
-          end
-          if @snippet_type == "question heading"
-            @topics << sanitize_text(text)
+          if @snippet_type == "department heading" and @subsection == "Oral Answer"
+            @department = sanitize_text(text)
+          else
+            if text.downcase == "prayers"
+              @subject = text
+              @subsection = ""
+            else
+              unless @snippet.empty? or @snippet.join("").length == 0
+                store_debate(page)
+                @snippet = []
+                @segment_link = ""
+                @questions = []
+                @petitions = []
+              end
+              case text.downcase
+                when "business without debate"
+                  @subsection = ""
+                when /^business/,
+                     "european union documents",
+                     "points of order",
+                     "royal assent",
+                     "bill presented"
+                  @subject = text
+                  @subsection = ""
+                when "petition"
+                  @subsection = "Petition"
+                when /adjournment/
+                  @subsection = "Adjournment Debate"
+                else
+                  if @subsection == ""
+                    @subsection = "Debate"
+                  end
+              end
+              unless text.downcase == "petition"
+                @snippet << sanitize_text(text)
+                @subject = sanitize_text(text)
+                @segment_link = "#{page.url}\##{@last_link}"
+              end
+            end
           end
         when "h4"
           text = node.text.gsub("\n", "").squeeze(" ").strip
-          @snippet << sanitize_text(text)
+          if @subject.downcase == "prayers"
+            if text =~ /\[(.*) in the Chair\]/
+              @chair = $1
+            end
+          elsif text.downcase == "backbench business"
+            #treat as honourary h3
+            unless @snippet.empty? or @snippet.join("").length == 0
+              store_debate(page)
+              @snippet = []
+              @segment_link = ""
+              @questions = []
+              @petitions = []
+            end
+            @subsection = "Debate"
+          else
+            @snippet << sanitize_text(text)
+          end
         when "h5"
           text = node.text.gsub("\n", "").squeeze(" ").strip
           @snippet << sanitize_text(text)
         when "p"
-          unless @snippet_type == "column heading"
-            text = node.text.gsub("\n", "").squeeze(" ").strip
-            @snippet << sanitize_text(text)
-            if @snippet_type == "question" and text[text.length-1..text.length] == "]"
+          column_desc = ""
+          member_name = ""
+          
+          if @subsection == "Debate"
+            if node.xpath("i") and node.xpath("i").length > 0
+              case node.xpath("i").first.text.strip
+                when /^Motion/
+                  unless (node.xpath("i").collect { |x| x.text }).join(" ") =~ /and Question p/
+                    @subsection = "Motion"
+                  end
+                when /^Debate resumed/
+                  @subject = "#{@subject} (resumed)"
+                when /^Ordered/
+                  @subsection = ""
+              end
+            end
+          end
+          
+          
+          if @snippet.empty? and node.xpath("center") and node.xpath("center").text == node.text
+            #skip it for now
+          else
+            if node.xpath("a") and node.xpath("a").length > 0
+              @last_link = node.xpath("a").last.attr("name")
+              node.xpath("a").each do |anchor|
+                case anchor.attr("name")
+                  when /^qn_/
+                    @snippet_type = "question"
+                  when /^st_/
+                    @snippet_type = "contribution"
+                    @link = node.attr("name")
+                end
+              end
+            end
+          end
+          
+          unless node.xpath("b").empty?
+            node.xpath("b").each do |bold|
+              if bold.text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W)?)(?:-continued)?$/  #older page format
+                if @start_column == ""
+                  @start_column = $1
+                else
+                  @end_column = $1
+                end
+                column_desc = bold.text
+              else 
+                member_name = bold.text.strip
+              end
+            end
+          else
+            member_name = ""
+          end
+          
+          text = node.text.gsub("\n", "").gsub(column_desc, "").squeeze(" ").strip
+          if @snippet_type == "question"
+            if text =~ /^(?:T|Q)\d+.\s\[([^\]]*)\] /
+              @questions << $1
+            elsif text[text.length-1..text.length] == "]" and text.length > 3
               question = text[text.rindex("[")+1..text.length-2]
               @questions << sanitize_text(question)
             end
+          end
+          if @subsection == "Petition"
+            if text =~ /\[(P[^\]]*)\]/
+              @petitions << $1
+            end
+          end
+          
+          #ignore column heading text
+          unless text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W)?)(?:-continued)?$/
+            #check if this is a new contrib
+            case member_name
+              when /^(([^\(]*) \(in the Chair\):)/
+                #the Chair
+                name = $2
+                post = "Debate Chair"
+                member = Member.new(name, name, "", "", post)
+                handle_contribution(@member, member, page)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              when /^(([^\(]*) \(([^\(]*)\):)/
+                #we has a minister
+                post = $2
+                name = $3
+                member = Member.new(name, "", "", "", post)
+                handle_contribution(@member, member, page)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              when /^(([^\(]*) \(([^\(]*)\) \(([^\(]*)\):)/
+                #an MP speaking for the first time in the debate
+                name = $2
+                constituency = $3
+                party = $4
+                member = Member.new(name, "", constituency, party)
+                handle_contribution(@member, member, page)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              when /^(([^\(]*):)/
+                #an MP who's spoken before
+                name = $2
+                member = Member.new(name, name)
+                handle_contribution(@member, member, page)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              else
+                if @member
+                  unless text =~ /^Sitting suspended|^Sitting adjourned|^On resuming|^Question put/ or
+                      text == "#{@member.search_name} rose\342\200\224"
+                    @contribution.segments << sanitize_text(text)
+                  end
+                end
+            end
+            @snippet << sanitize_text(text)
           end
         when "div"
          #if node.attr("class").value.to_s == "navLinks"
@@ -124,5 +286,131 @@ class DebatesParser < Parser
         when "hr"
           #ignore
       end
+    end
+    
+    def store_debate(page)
+      handle_contribution(@member, @member, page)
+      
+      unless @questions.empty?
+        @subsection = "Oral Answer"
+      end
+      
+      if @segment_link #no point storing pointers that don't link back to the source
+        segment_id = "#{doc_id}_wh_#{@count}"
+        @count += 1
+        names = []
+        @members.each { |x, y| names << y.index_name unless names.include?(y.index_name) }
+      
+        column_text = ""
+        if @start_column == @end_column or @end_column == ""
+          column_text = @start_column
+        else
+          column_text = "#{@start_column} to #{@end_column}"
+        end
+      
+        if @questions == [] and @subsection == "Oral Answer"
+          @subsection = "Debate"
+          @department = ""
+        end
+        
+        if @petitions == [] and @subsection == "Petition"
+          @subsection = "Debate"
+        end
+      
+        subject = ""
+        if @subsection == ""
+          subject = @subject
+        else
+          subject = "#{@subsection}: #{@subject}"
+        end
+      
+        doc = {:title => sanitize_text(subject),
+         :volume => page.volume,
+         :columns => column_text,
+         :part => sanitize_text(page.part.to_s),
+         :members => "| #{names.join(" | ")} |".squeeze(" "),
+         :chair => @chair,
+         :subject => subject,
+         :url => @segment_link,
+         :house => house,
+         :section => section,
+         :timestamp => Time.parse(date).to_i
+        }
+        
+        if @department != ""
+          doc[:department] = @department
+        end
+         
+        categories = {"house" => house, "section" => section}
+      
+        #@indexer.add_document(segment_id, doc, @snippet.join(" "), categories, "idx")
+
+        @start_column = @end_column
+        
+        p subject
+        p segment_id
+        p @segment_link
+        p "Dept: " + @department
+        p "Chair: " + @chair
+        p "Questions: " + @questions.join(", ")
+        p "Petitions: " + @petitions.join(", ")
+        p ""
+      
+        #store_member_contributions(page, @segment_link)
+        
+        if @subsection == "Motion"
+          @subsection = ""
+        end
+      end
+    end
+    
+    def store_member_contributions(page, debate_link)
+      p ""
+      @members.keys.each do |member|
+        p "storing contributions for: #{member}"
+        @members[member].contributions.each do |contribution|
+          segment_id = "#{doc_id}_wh_contribution_#{@contribution_count}"
+          @contribution_count += 1
+      
+          column_text = ""
+          if contribution.start_column == contribution.end_column or contribution.end_column == ""
+            column_text = contribution.start_column
+          else
+            column_text = "#{contribution.start_column} to #{contribution.end_column}"
+          end
+          
+          doc = {:title => sanitize_text("#{@subject}"),
+             :timestamp => Time.parse(date).to_i,
+             :member => @members[member].index_name,
+             :constituency => @members[member].constituency,
+             :post => @members[member].post,
+             :volume => page.volume,
+             :columns => column_text,
+             :part => sanitize_text(page.part.to_s),
+             :chair => @chair,
+             :subject => @subject,
+             :url => contribution.link,
+             :house => house,
+             :section => section,
+             :debate_url => debate_link
+            }
+            
+          categories = {
+              "house" => house, 
+              "section" => section, 
+              "subject" => @subject, 
+              "member" => @members[member].index_name,
+              "parent" => "#{@subject}|#{debate_link}"
+            }
+            
+          @indexer.add_document(segment_id, doc, contribution.segments.join(" "), categories, "contributions")
+
+          p "#{@members[member].index_name}, #{@subject}"
+          p segment_id
+          p ""
+        end
+      end
+      @members = {}
+      @member = nil
     end
 end
