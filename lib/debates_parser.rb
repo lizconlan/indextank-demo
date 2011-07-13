@@ -340,23 +340,31 @@ class DebatesParser < Parser
         if @department != ""
           doc[:department] = @department
         end
+        
+        unless @questions.empty?
+          doc[:questions] = "| " + @questions.join(" | ") + " |"
+        end
+        
+        unless @petitions.empty?
+          doc[:petitions] = "| " + @petitions.join(" | ") + " |"
+        end
          
         categories = {"house" => house, "section" => section}
       
-        #@indexer.add_document(segment_id, doc, @snippet.join(" "), categories, "idx")
+        @indexer.add_document(segment_id, doc, @snippet.join(" "), categories, "idx")
 
         @start_column = @end_column
         
         p subject
         p segment_id
         p @segment_link
-        p "Dept: " + @department
-        p "Chair: " + @chair
-        p "Questions: " + @questions.join(", ")
-        p "Petitions: " + @petitions.join(", ")
+        # p "Dept: " + @department
+        # p "Chair: " + @chair
+        # p "Questions: " + @questions.join(", ")
+        # p "Petitions: " + @petitions.join(", ")
         p ""
       
-        #store_member_contributions(page, @segment_link)
+        store_member_contributions(page, @segment_link)
         
         if @subsection == "Motion"
           @subsection = ""

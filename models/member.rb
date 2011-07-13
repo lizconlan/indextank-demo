@@ -4,7 +4,7 @@ class Member
   
   def initialize(name, search_name="", constituency="", party="", post="")
     if name =~ / Speaker$/
-      @search_name, @index_name = name
+      @search_name = @index_name = name
     else
       if search_name == ""
         @search_name = format_search_name(name)
