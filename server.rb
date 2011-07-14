@@ -114,8 +114,8 @@ private
     search = Search.new()
     query = "members:#{member_name}"
     query = "#{query} text:#{rest_of_query}" unless rest_of_query == ""
-    search.index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house,timestamp',
-       :category_filters => @filter, :start => offset)
+    
+    search.search(query, @filter, offset)
   end
   
   def do_member_contributions_search(member_name)

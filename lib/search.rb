@@ -24,7 +24,7 @@ class Search
     
   def search(query, filter={}, offset=0)
     # adapted from reddit codebase
-    special_characters = [" - ", '&', '|', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', ':', '\\']
+    special_characters = [" - ", '&', '|', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', '\\']
     special_characters.each do |thing_that_crashes_indextank|
       query = query.gsub(thing_that_crashes_indextank, " ").squeeze(" ")
     end
