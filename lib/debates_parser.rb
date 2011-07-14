@@ -150,9 +150,7 @@ class DebatesParser < Parser
         when "h4"
           text = node.text.gsub("\n", "").squeeze(" ").strip
           if @subject.downcase == "prayers"
-            if text =~ /\[(.*) in the Chair\]/
-              @chair = $1
-            end
+            #ignore
           elsif text.downcase == "backbench business"
             #treat as honourary h3
             unless @snippet.empty? or @snippet.join("").length == 0
@@ -329,7 +327,6 @@ class DebatesParser < Parser
          :columns => column_text,
          :part => sanitize_text(page.part.to_s),
          :members => "| #{names.join(" | ")} |".squeeze(" "),
-         :chair => @chair,
          :subject => subject,
          :url => @segment_link,
          :house => house,
@@ -359,7 +356,6 @@ class DebatesParser < Parser
         p segment_id
         p @segment_link
         # p "Dept: " + @department
-        # p "Chair: " + @chair
         # p "Questions: " + @questions.join(", ")
         # p "Petitions: " + @petitions.join(", ")
         p ""
@@ -395,7 +391,6 @@ class DebatesParser < Parser
              :volume => page.volume,
              :columns => column_text,
              :part => sanitize_text(page.part.to_s),
-             :chair => @chair,
              :subject => @subject,
              :url => contribution.link,
              :house => house,
