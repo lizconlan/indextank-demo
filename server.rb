@@ -68,7 +68,7 @@ get "/" do
   starting_query = @query
   
   if @query and @query.strip != ""
-    if @query.index('"')
+    while @query.index('"')
       offset = @query.index('"')
       string_end = @query.index('"', offset+1)
       if string_end
