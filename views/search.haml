@@ -8,6 +8,12 @@
     %strong #{h(@query)}
     - if @member
       %strong #{h(@member.gsub("+", " "))}
+    - if @question
+      question
+      %strong #{h(@question)}
+    - if @petition
+      petition
+      %strong #{h(@petition)}
     - if @member and @suggestions.length > 0
       
       %p
@@ -22,16 +28,24 @@
   -else
     %p
       =haml :_info
-    - if @member
-      - if @query == ""
-        Hansard entries featuring contributions by
-        %strong #{h(@member.gsub("+", " "))}
-      - else
-        Hansard entries containing
-        %strong #{h(@query)}
-        that feature contributions by
-        %strong #{h(@member.gsub("+", " "))}
-    - else
+    
+      - if @member
+        - if @query == ""
+          Hansard entries featuring contributions by
+          %strong #{h(@member.gsub("+", " "))}
+        - else
+          Hansard entries containing
+          %strong #{h(@query)}
+          that feature contributions by
+          %strong #{h(@member.gsub("+", " "))}
+      -elsif @question
+        Hansard entries containing question
+        %strong #{h(@question)}
+      -elsif @petition
+        Hansard entries containing petition
+        %strong #{h(@question)}
+    
+    - unless @member or @question or @petition
       Hansard entries containing
       %strong #{h(@query)}
     

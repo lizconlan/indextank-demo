@@ -13,4 +13,4 @@
       %strong #{h(@filter[:member])}
     - else
       %strong #{h(@filter["section"])}
-    %a.filter{:href => "?q=#{@query}"} [Show all]
+    %a.filter{:href => "?q=#{params[:q].gsub("+", "%2B")}"} [Show all]

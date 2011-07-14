@@ -45,6 +45,8 @@ get "/" do
   @page = params[:p].to_i
   @suggestions = []
   
+  query = @query
+  
   @page = 1 if @page < 1
   
   #the default for IndexTank, can be changed (I think)
@@ -63,6 +65,8 @@ get "/" do
     end
   end
   
+  starting_query = @query
+  
   if @query and @query.strip != ""
     offset = @query.index("member:")
     @member = nil
@@ -71,10 +75,39 @@ get "/" do
       string_end = @query.length unless string_end 
       @member = @query[offset+7..string_end].strip
       @query = @query.gsub("member:#{@member}", "").strip
+      query = "members:#{@member}"
     end
     
+    offset = @query.index("question:")
+    @question = nil
+    if offset
+      string_end = @query.index(" ", offset+9)
+      string_end = @query.length unless string_end 
+      @question = @query[offset+9..string_end].strip
+      @query = @query.gsub("question:#{@question}", "").strip
+      query = "questions:#{@question}"
+    end
+    
+    offset = @query.index("petition:")
+    @petition = nil
+    if offset
+      string_end = @query.index(" ", offset+9)
+      string_end = @query.length unless string_end 
+      @petition = @query[offset+9..string_end].strip
+      @query = @query.gsub("petition:#{@petition}", "").strip
+      query = "petitions:#{@petition}"
+    end
+    
+    unless @query == starting_query
+      unless @query.strip == ""
+        query = "#{query} text:#{@query}"
+      end
+    end
+    
+    index = Search.new()
+    @results = index.search(query, @filter, @start)
+    
     if @member
-      @results = do_member_debates_search(@member, @query, @start)
       if @results["matches"] == 0 and @query == ""
         surname = @member.split("+").last
         firstname = @member.split("+").first
@@ -90,11 +123,7 @@ get "/" do
             @suggestions = candidates.collect{ |x| x[0] }
           end
         end
-        p @suggestions
       end
-    else
-      index = Search.new()
-      @results = index.search(@query, @filter, @start)
     end
     
     @results = dedup_results(@results)
