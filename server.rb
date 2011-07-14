@@ -138,15 +138,7 @@ get "/" do
   haml :search
 end
 
-private
-  def do_member_debates_search(member_name, rest_of_query="", offset=0)
-    search = Search.new()
-    query = "members:#{member_name}"
-    query = "#{query} text:#{rest_of_query}" unless rest_of_query == ""
-    
-    search.search(query, @filter, offset)
-  end
-  
+private  
   def do_member_contributions_search(member_name)
     search = Search.new()
     query = "member:#{member_name}"
