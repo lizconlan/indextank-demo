@@ -68,6 +68,26 @@ get "/" do
   starting_query = @query
   
   if @query and @query.strip != ""
+    if @query.index('"')
+      offset = @query.index('"')
+      string_end = @query.index('"', offset+1)
+      if string_end
+        string_end -= 1
+      else
+        string_end = @query.length
+      end
+      for_replacement = @query[offset+1..string_end]
+      if offset > 0
+        query = "#{@query[0..offset-1]}#{for_replacement.gsub(" ", "+")}"
+      else
+        query = for_replacement.gsub(" ", "+")
+      end
+      if string_end < @query.length
+        query = "#{query}#{@query[string_end+2..@query.length]}"
+      end
+      starting_query = @query = query
+    end
+    
     offset = @query.index("member:")
     @member = nil
     if offset
