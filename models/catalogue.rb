@@ -20,6 +20,21 @@ class Catalogue
     JSON.parse(response.body)
   end
   
+  def find_member(q)
+    #ToDo: add error handling
+    response = RestClient.get("https://#{@api_key}:#{@api_secret}@mongohq.com/api/databases/hansard-search/collections/members/documents", :params => {"q" => q})
+    p "https://#{@api_key}:#{@api_secret}@mongohq.com/api/databases/hansard-search/collections/members/documents"
+    JSON.parse(response.body)
+  end
+  
+  def add_member(doc)
+    #ToDo: add error handling
+    #...and check doc is sensible?
+    doc = JSON.generate(doc)
+    response = RestClient.post("https://#{@api_key}:#{@api_secret}@mongohq.com/api/databases/hansard-search/collections/members/documents", "document" => doc)
+    JSON.parse(response.body)
+  end
+  
   def find(q)
     #ToDo: add error handling
     response = RestClient.get("https://#{@api_key}:#{@api_secret}@mongohq.com/api/databases/hansard-search/collections/indexed/documents", :params => {"q" => q})
@@ -31,6 +46,12 @@ class Catalogue
     #...and check doc is sensible?
     doc = JSON.generate(doc)
     response = RestClient.post("https://#{@api_key}:#{@api_secret}@mongohq.com/api/databases/hansard-search/collections/indexed/documents", "document" => doc)
+    JSON.parse(response.body)
+  end
+  
+  def update(doc_id, changes)
+    #ToDo: add error handling
+    response = RestClient.put("https://#{@api_key}:#{@api_secret}@mongohq.com/api/databases/hansard-search/collections/indexed/documents/#{doc_id}", "document" => changes)
     JSON.parse(response.body)
   end
 end

@@ -1,6 +1,7 @@
 require 'sinatra'
 require 'time'
 require 'lib/search'
+require 'models/catalogue'
 
 helpers do
   include Rack::Utils
@@ -132,15 +133,15 @@ get "/" do
         surname = @member.split("+").last
         firstname = @member.split("+").first
         results = do_member_contributions_search(surname)
-        candidates = results["facets"]["member"]
+        candidates = results
         if candidates
-          candidates.each do |candidate_name, count|
-            if candidate_name.split(" ").first.downcase == firstname.downcase
-              @suggestions << candidate_name
+          candidates.each do |candidate|
+            if candidate["name"].split(" ").first.downcase == firstname.downcase
+              @suggestions << candidate["name"]
             end
           end
           if @suggestions.empty?
-            @suggestions = candidates.collect{ |x| x[0] }
+            @suggestions = candidates.collect{ |x| x["name"] }
           end
         end
       end
@@ -159,10 +160,9 @@ get "/" do
 end
 
 private  
-  def do_member_contributions_search(member_name)
-    search = Search.new()
-    query = "member:#{member_name}"
-    search.contribs_index.search(query, :fetch => 'title,url,part,volume,columns,chair,section,house,timestamp')
+  def do_member_contributions_search(surname)
+    index = Catalogue.new()
+    index.find_member("{name:{$regex:' #{surname}$',$options:'i'}}")
   end
   
   def dedup_results(results)
