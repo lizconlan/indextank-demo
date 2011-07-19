@@ -194,7 +194,7 @@ class WMSParser < Parser
       
         @indexer.add_document(segment_id, doc, @snippet.join(" "), categories, "idx")
 
-        @start_column = @end_column
+        @start_column = @end_column if @end_column != ""
       
         p @subject
         p segment_id
