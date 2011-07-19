@@ -4,8 +4,13 @@
   
 -if @results
   - if @results["results"].empty?
-    No Hansard entries found for 
-    %strong #{h(@query)}
+    %p Your search - <strong>#{h(@query)}</strong> - did not match any documents.
+    %p Suggestions:
+    %ul
+      %li Make sure all words are spelled correctly.
+      %li Try different keywords.
+      %li Try more general keywords.
+      %li Try fewer keywords.
     - if @member
       %strong #{h(@member.gsub("+", " "))}
     - if @question
