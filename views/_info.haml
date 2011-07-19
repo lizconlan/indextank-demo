@@ -1,16 +1,16 @@
 .info
-  - if @results["matches"] == 1
-    Showing 1 result
-  - else
-    Showing #{@start+1} to #{@last_record} of 
-    - if @results["matches"] > @start + @page_size
-      about
-    #{@results["matches"]} results
+  - if @results["matches"] > 4
+    - if @last_record != @results["matches"]
+      %p
+        Showing #{@start+1} to #{@last_record} of 
+        - if @results["matches"] > @start + @page_size
+          about
+        #{@results["matches"]} results
   - unless @filter.empty?
-    from 
-    - if @filter[:member]
-      contributions by
-      %strong #{h(@filter[:member])}
-    - else
-      %strong #{h(@filter["section"])}
-    %a.filter{:href => "?q=#{params[:q].gsub("+", "%2B")}"} [Show all]
+    .filter 
+      - if @filter[:member]
+        Contributions by
+        #{h(@filter[:member])}
+      - else
+        #{h(@filter["section"])}
+      %a.remove-filter{:href => "?q=#{params[:q].gsub("+", "%2B")}", :title => "Remove this filter"} &times;

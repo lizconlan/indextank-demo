@@ -1,5 +1,5 @@
 %form#search
-  %input{:name => "q", :value => params[:q], "x-webkit-speech" => ""}
+  %input{:name => "q", :type => "text", :value => params[:q], "x-webkit-speech" => ""}
   %input{:type => "submit", :value => "Search"}
   
 -if @results
@@ -63,17 +63,19 @@
         %span.title
           %a.section{:href => result["url"]}= result["title"]
         %br
+        %span.url= format_url(result["url"])
+        %br
         - unless display_section(result["section"]) == ""
           %span.description= display_section(result["section"], result["chair"])
           %br
         %span.description
-          %strong
-            =display_time(result["timestamp"])
-          ="&mdash; #{result["house"]} Hansard Vol #{result["volume"]}; Part #{result["part"]}; Cols #{result["columns"]}"
+          %cite= "H#{result['house'][0].chr} Deb " + display_time(result["timestamp"]) + " vol #{result["volume"]} cc#{result["columns"]} (Part #{result["part"]})"
         %br
         - if result["snippet_text"] != ""
-          %span.abstract= result["snippet_text"]
-          %br
-        %span.url= format_url(result["url"])
+          %span.abstract
+            =result["snippet_text"]
+            &hellip;
+            
+        
   - unless @results["results"].empty?
     =haml :_pagination
