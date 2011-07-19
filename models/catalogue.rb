@@ -23,7 +23,6 @@ class Catalogue
   def find_member(q)
     #ToDo: add error handling
     response = RestClient.get("https://#{@api_key}:#{@api_secret}@mongohq.com/api/databases/hansard-search/collections/members/documents", :params => {"q" => q})
-    p "https://#{@api_key}:#{@api_secret}@mongohq.com/api/databases/hansard-search/collections/members/documents"
     JSON.parse(response.body)
   end
   
