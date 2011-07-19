@@ -23,6 +23,7 @@ class DebatesParser < Parser
     
     @members = {}
     @member = nil
+    @section_members = {}
     @contribution = nil
     
     @last_link = ""
@@ -121,6 +122,7 @@ class DebatesParser < Parser
                 @segment_link = ""
                 @questions = []
                 @petitions = []
+                @section_members = {}
               end
               case text.downcase
                 when "business without debate"
@@ -160,6 +162,7 @@ class DebatesParser < Parser
               @segment_link = ""
               @questions = []
               @petitions = []
+              @section_members = {}
             end
             @subsection = "Debate"
           else

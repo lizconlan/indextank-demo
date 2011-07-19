@@ -76,7 +76,12 @@ class Parser
     def handle_contribution(member, new_member, page)
       if @contribution and member
         unless @members.keys.include?(member.search_name)
-          @members[member.search_name] = member
+          if @section_members.keys.include?(member.search_name)
+            @members[member.search_name] = @section_members[member.search_name]
+          else
+            @members[member.search_name] = member
+            @section_members[member.search_name] = member
+          end
         end
         @contribution.end_column = @end_column
         @members[member.search_name].contributions << @contribution
@@ -89,21 +94,25 @@ class Parser
       if new_member
         if @members.keys.include?(new_member.search_name)
           new_member = @members[new_member.search_name]
+        elsif @section_members.keys.include?(new_member.search_name)
+          new_member = @section_members[new_member.search_name]
         else
           @members[new_member.search_name] = new_member
+          @section_members[new_member.search_name] = new_member
         end
         @member = new_member
       end
     end
     
     def store_member_contributions
-      p ""
       @members.keys.each do |member|
         p "storing: #{@members[member].index_name}"
-        @indexer.add_member(@members[member].index_name)
+        @indexer.add_member(@members[member].index_name, @members[member].post)
       end
       @members = {}
       @member = nil
+      p ""
+      p ""
     end
     
     def sanitize_text(text)

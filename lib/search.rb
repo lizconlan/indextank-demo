@@ -80,14 +80,21 @@ class Search
     end
   end
   
-  def add_member(name)
+  def add_member(name, post=nil)
     if name.downcase() =~ /^the / or name.downcase() =~ / speaker$/
       if @cat.find_member("{ post : '#{name}' }") == []
         @cat.add_member({"post" => name})
       end
     else
-      if @cat.find_member("{ name : '#{name}' }") == []
-        @cat.add_member({"name" => name})
+      if name.split(" ").length > 1      
+        if @cat.find_member("{ name : '#{name}' }") == []
+          @cat.add_member({"name" => name})
+        end
+      end
+    end
+    if post and post.length > 0
+      if @cat.find_member("{ post : '#{post}' }") == []
+        @cat.add_member({"post" => post})
       end
     end
   end
