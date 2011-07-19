@@ -1,12 +1,12 @@
 .pagination
   - if @start > 9
     - if params[:f]
-      %a{:href => "/?q=#{params[:q]}&p=#{@page-1}&f=#{CGI::escape(params[:f])}", :rel => "Previous"} &lt;&lt Prev
+      %a{:href => "/?q=#{params[:q]}&p=#{@page-1}&f=#{CGI::escape(params[:f])}", :rel => "Previous"} &larr; Previous
     - else
-      %a{:href => "/?q=#{params[:q]}&p=#{@page-1}", :rel => "Previous"} &lt;&lt Prev
+      %a{:href => "/?q=#{params[:q]}&p=#{@page-1}", :rel => "Previous"} &larr; Previous
   
   - if @results["matches"] > @start + @page_size
     - if params[:f]
-      %a{:href => "/?q=#{params[:q]}&p=#{@page+1}&f=#{CGI::escape(params[:f])}", :rel => "Next", :class => "right_link"} Next &gt;&gt;
+      %a{:href => "/?q=#{params[:q]}&p=#{@page+1}&f=#{CGI::escape(params[:f])}", :rel => "Next", :class => "right_link"} Next &rarr;
     - else
-      %a{:href => "/?q=#{params[:q]}&p=#{@page+1}", :rel => "Next", :class => "right_link"} Next &gt;&gt;
+      %a{:href => "/?q=#{params[:q]}&p=#{@page+1}", :rel => "Next", :class => "right_link"} Next &rarr;
