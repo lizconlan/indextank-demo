@@ -1,9 +1,12 @@
+!!! 5
 %html
   %head
     %title Hansard Search
     %link{:rel => "stylesheet", :type => "text/css", :href => "/style/main.css"}
   %body  
-    %h1 Hansard Search
-    = yield
+    %header
+      %h1 Hansard Search
+    %section
+      = yield
     %footer
       <a href="http://indextank.com/?utm_campaign=poweredby" name="Powered-by Indextank" rel="friend"><img src="http://indextank.com/_static/images/poweredby/idt-badge-sm.png" alt="IndexTank: hosted search you control"/></a>
