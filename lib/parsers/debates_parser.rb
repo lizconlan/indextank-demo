@@ -23,6 +23,7 @@ class DebatesParser < Parser
     
     @members = {}
     @member = nil
+    @section_members = {}
     @contribution = nil
     
     @last_link = ""
@@ -32,6 +33,7 @@ class DebatesParser < Parser
     @start_column = ""
     @end_column = ""
     @questions = []
+    @question_no = ""
     @petitions = []
     
     @subsection = ""
@@ -120,6 +122,7 @@ class DebatesParser < Parser
                 @segment_link = ""
                 @questions = []
                 @petitions = []
+                @section_members = {}
               end
               case text.downcase
                 when "business without debate"
@@ -159,6 +162,7 @@ class DebatesParser < Parser
               @segment_link = ""
               @questions = []
               @petitions = []
+              @section_members = {}
             end
             @subsection = "Debate"
           else
@@ -186,7 +190,6 @@ class DebatesParser < Parser
             end
           end
           
-          
           if @snippet.empty? and node.xpath("center") and node.xpath("center").text == node.text
             #skip it for now
           else
@@ -196,6 +199,7 @@ class DebatesParser < Parser
                 case anchor.attr("name")
                   when /^qn_/
                     @snippet_type = "question"
+                    @link = node.attr("name")
                   when /^st_/
                     @snippet_type = "contribution"
                     @link = node.attr("name")
@@ -221,12 +225,26 @@ class DebatesParser < Parser
             member_name = ""
           end
           
-          #p "**** #{member_name} ****" if member_name.length > 0
-          
           text = node.text.gsub("\n", "").gsub(column_desc, "").squeeze(" ").strip
           if @snippet_type == "question"
-            if text =~ /^(?:T|Q)\d+.\s\[([^\]]*)\] /
-              @questions << $1
+            if text =~ /^((?:T|Q)\d+)\.\s\[([^\]]*)\] /
+              qno = $1
+              question = $2
+              unless @questions.empty?
+                if @subject =~ /\- (?:T|Q)\d+/
+                  @subject = "#{@subject.gsub(/\- (?:T|Q)\d+/, "- #{@question_no}")}"
+                else
+                  @subject = "#{@subject} - #{@question_no}"
+                end
+                store_debate(page)
+                @snippet = []
+                @questions = []
+                @petitions = []
+              end
+              @question_no = qno
+              @questions << question
+              @segment_link = "#{page.url}\##{@last_link}"
+              @subject = "#{@subject.gsub(/\- (?:T|Q)\d+/, "- #{@question_no}")}"
             elsif text[text.length-1..text.length] == "]" and text.length > 3
               question = text[text.rindex("[")+1..text.length-2]
               @questions << sanitize_text(question)

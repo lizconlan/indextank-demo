@@ -21,6 +21,7 @@ class WHDebatesParser < Parser
     @contribution_count = 0
 
     @members = {}
+    @section_members = {}
     @member = nil
     @contribution = nil
     
