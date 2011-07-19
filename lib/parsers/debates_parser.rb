@@ -221,6 +221,8 @@ class DebatesParser < Parser
             member_name = ""
           end
           
+          #p "**** #{member_name} ****" if member_name.length > 0
+          
           text = node.text.gsub("\n", "").gsub(column_desc, "").squeeze(" ").strip
           if @snippet_type == "question"
             if text =~ /^(?:T|Q)\d+.\s\[([^\]]*)\] /
@@ -254,7 +256,7 @@ class DebatesParser < Parser
                 member = Member.new(name, "", "", "", post)
                 handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
-              when /^(([^\(]*) \(([^\(]*)\) \(([^\(]*)\):)/
+              when /^(([^\(]*) \(([^\(]*)\) \(([^\(]*)\))/
                 #an MP speaking for the first time in the debate
                 name = $2
                 constituency = $3
