@@ -196,59 +196,8 @@ class WHDebatesParser < Parser
         p @segment_link
         p ""
       
-        store_member_contributions(page, @segment_link)
+        store_member_contributions
       end
-    end
-    
-    def store_member_contributions(page, debate_link)
-      p ""
-      @members.keys.each do |member|
-        p "storing contributions for: #{member}"
-        @indexer.add_member(@members[member].index_name)
-        # @members[member].contributions.each do |contribution|
-        #           segment_id = "#{doc_id}_wh_contribution_#{@contribution_count}"
-        #           @contribution_count += 1
-        #       
-        #           column_text = ""
-        #           if contribution.start_column == contribution.end_column or contribution.end_column == ""
-        #             column_text = contribution.start_column
-        #           else
-        #             column_text = "#{contribution.start_column} to #{contribution.end_column}"
-        #           end
-        #           
-        #           doc = {:title => sanitize_text("#{@subject}"),
-        #              :timestamp => Time.parse(date).to_i,
-        #              :member => @members[member].index_name,
-        #              :constituency => @members[member].constituency,
-        #              :post => @members[member].post,
-        #              :volume => page.volume,
-        #              :columns => column_text,
-        #              :part => sanitize_text(page.part.to_s),
-        #              :chair => @chair,
-        #              :subject => @subject,
-        #              :url => contribution.link,
-        #              :house => house,
-        #              :section => section,
-        #              :debate_url => debate_link
-        #             }
-        #             
-        #           categories = {
-        #               "house" => house, 
-        #               "section" => section, 
-        #               "subject" => @subject, 
-        #               "member" => @members[member].index_name,
-        #               "parent" => "#{@subject}|#{debate_link}"
-        #             }
-        #             
-        #           @indexer.add_document(segment_id, doc, contribution.segments.join(" "), categories, "contributions")
-        # 
-        #           p "#{@members[member].index_name}, #{@subject}"
-        #           p segment_id
-        #           p ""
-        #end
-      end
-      @members = {}
-      @member = nil
     end
 
 end

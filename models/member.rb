@@ -4,17 +4,17 @@ class Member
   
   def initialize(name, search_name="", constituency="", party="", post="")
     if name =~ / Speaker$/
-      @search_name = @index_name = name
+      @search_name = @index_name = name.squeeze(" ").strip
     else
       if search_name == ""
-        @search_name = format_search_name(name)
-        @index_name = format_index_name(name)
+        @search_name = format_search_name(name).squeeze(" ").strip
+        @index_name = format_index_name(name).squeeze(" ").strip
       else
-        @search_name = name
-        @index_name = format_index_name(name)
+        @search_name = name.squeeze(" ").strip
+        @index_name = format_index_name(name).squeeze(" ").strip
       end
     end
-    @name = name
+    @name = name.squeeze(" ").strip
     @constituency = constituency
     @party = party
     @post = post

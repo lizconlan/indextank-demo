@@ -96,6 +96,16 @@ class Parser
       end
     end
     
+    def store_member_contributions
+      p ""
+      @members.keys.each do |member|
+        p "storing: #{@members[member].index_name}"
+        @indexer.add_member(@members[member].index_name)
+      end
+      @members = {}
+      @member = nil
+    end
+    
     def sanitize_text(text)
       text = text.gsub("\342\200\230", "'")
       text = text.gsub("\342\200\231", "'")
