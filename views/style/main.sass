@@ -2,6 +2,7 @@ body
   width: 550px
   margin: 50px auto
   font-family: arial,sans-serif
+  line-height: 110%
   
 h1
   font-size: 1.15em
@@ -43,15 +44,10 @@ a
   text-decoration: none
   font-size: 0.85em
   
+.abstract,
 .info,
 .extension
   font-size: 0.85em
-  
-blockquote.abstract
-  padding: 0px
-  margin: 0px
-  font-size: 0.85em
-  border: none
 
 .info
   margin-bottom: 0.4em
@@ -78,14 +74,18 @@ blockquote.abstract
     right: 0.5em
     
 #facets
-  h3
-    font-size: 1em
-    margin-bottom: 0.25em
     
   ul
-    margin-top: 0
-    padding-left: 0.7em
+    margin: 0
+    padding: 0
     
     li
-      font-size: 0.95em
       list-style: none
+      margin-top: 0.5em
+      
+    a
+      color: gray
+      
+    li.all
+      font-weight: bold
+      color: crimson

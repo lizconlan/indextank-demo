@@ -22,9 +22,9 @@ helpers do
   def display_section(section, chair="")
     case section
       when "Westminster Hall"
-        "<strong>Westminster Hall</strong> &mdash; #{chair} in the Chair"
+        "Westminster Hall &mdash; Chair: #{chair}"
       else
-        "<strong>#{section}</strong>"
+        "#{section}"
     end
   end
   

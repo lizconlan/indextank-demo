@@ -11,6 +11,11 @@
       %li Try different keywords.
       %li Try more general keywords.
       %li Try fewer keywords.
+    %p You can also search for -
+    %ul
+      %li "question:" followed by the Question reference
+      %li "petition:" followed by the Petition reference
+      %li &hellip; or MPs with "member:" followed by the MP name
     - if @member
       %strong #{h(@member.gsub("+", " "))}
     - if @question

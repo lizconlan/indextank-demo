@@ -1,8 +1,8 @@
 -if @facets["section"] and @facets["section"].length > 1
   #facets
-    %h3 Sections
     %ul#sections
+      %li.all All sections
       -@facets["section"].each do |facet_key|
         %li.section
-          %a{:href => "?q=#{params[:q].gsub("+", "%2B")}&f=section%7c#{facet_key[0]}"}
-            ="#{facet_key[0]} (#{facet_key[1]})"
+          %a{:title => "Show only results from #{facet_key[0]}", :href => "?q=#{params[:q].gsub("+", "%2B")}&f=section%7c#{facet_key[0]}"}
+            ="#{facet_key[0]} &ndash; #{facet_key[1]}"
