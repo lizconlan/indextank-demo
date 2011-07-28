@@ -54,12 +54,14 @@ class Search
                 
         store.document(doc_id).add(doc)
         store.document(doc_id).update_categories(categories)
+        store.document(doc_id).update_variables({ 0 => doc["timestamp"].to_i})
         p "stored #{doc_id}"
       else
         segment_end = find_breakpoint(text, 100000)
         doc[:text] = text[0..segment_end]
         store.document(doc_id).add(doc)
         store.document(doc_id).update_categories(categories)
+        store.document(doc_id).update_variables({ 0 => doc["timestamp"].to_i})
         p "stored #{doc_id}"
         
         text = text[segment_end+1..text.length]
@@ -71,6 +73,7 @@ class Search
           
           store.document(segment_id).add(doc)
           store.document(segment_id).update_categories(categories)
+          store.document(doc_id).update_variables({ 0 => doc["timestamp"].to_i})
           p "stored #{segment_id}"
         
           text = text[segment_end+1..text.length]
