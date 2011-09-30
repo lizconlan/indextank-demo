@@ -1,5 +1,6 @@
 require 'indextank'
 require 'yaml'
+require 'time'
 
 require 'models/catalogue'
 
@@ -22,7 +23,7 @@ class Search
     @cat = Catalogue.new()
   end
     
-  def search(query, filter={}, offset=0)
+  def search(query, filter={}, date_filter=nil, offset=0)
     # adapted from reddit codebase
     special_characters = [" - ", '&', '|', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', '\\']
     special_characters.each do |thing_that_crashes_indextank|
@@ -31,11 +32,11 @@ class Search
     
     if filter[:member]
       contribs_index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house,timestamp', 
-        :category_filters => filter, :start => offset
+        :category_filters => filter, :start => offset, :docvar_filters => { "0" => [date_filter] }
       )
     else
       index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house,timestamp', 
-        :category_filters => filter, :start => offset
+        :category_filters => filter, :start => offset, :docvar_filters => { "0" => [date_filter] }
       )
     end
   end

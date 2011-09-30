@@ -58,6 +58,8 @@ get "/" do
   
   @filter = {}
   
+  @date_filter = build_date_filter(params[:start_date], params[:end_date])
+  
   if params[:f]
     pairs = params[:f].split("^")
     pairs.each do |pair|
@@ -126,7 +128,7 @@ get "/" do
     end
     
     index = Search.new()
-    @results = index.search(query, @filter, @start)
+    @results = index.search(query, @filter, @date_filter, @start)
     
     if @member
       if @results["matches"] == 0 and @query == ""
@@ -193,4 +195,20 @@ private
     #delete the unwanted records (if applicable)
     results["results"].delete_if { |x| for_deletion.include?(x["docid"])}
     results
+  end
+  
+  def build_date_filter(start_date, end_date)
+    begin
+      start_date = Time.parse(start_date).to_i
+    rescue
+      start_date = "*"
+    end
+    
+    begin
+      end_date = Time.parse(end_date).to_i
+    rescue
+      end_date = "*"
+    end
+    
+    return [start_date.to_s, end_date.to_s]
   end
