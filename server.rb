@@ -19,6 +19,23 @@ helpers do
     url
   end
   
+  def compose_querystring(next_page=nil, facet_string=nil)
+    qs = "?q=#{params[:q]}"
+    if next_page
+      qs = "#{qs}&p=#{next_page}"
+    end
+    if facet_string
+      unless facet_string == ""
+        qs = "#{qs}&f=#{facet_string}"
+      end
+    else
+      qs = "#{qs}&f=#{CGI::escape(params[:f])}" if params[:f]
+    end
+    qs = "#{qs}&start_date=#{params[:start_date]}" if params[:start_date]
+    qs = "#{qs}&end_date=#{params[:end_date]}" if params[:end_date]
+    qs
+  end
+  
   def display_section(section, chair="")
     case section
       when "Westminster Hall"

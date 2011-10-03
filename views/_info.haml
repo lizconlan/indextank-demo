@@ -13,4 +13,4 @@
         #{h(@filter[:member])}
       - else
         #{h(@filter["section"])}
-      %a.remove-filter{:href => "?q=#{params[:q].gsub("+", "%2B")}", :title => "Remove this filter"} &times;
+      %a.remove-filter{:href => "#{compose_querystring(nil, "")}", :title => "Remove this filter"} &times;
