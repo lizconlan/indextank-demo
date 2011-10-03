@@ -19,7 +19,7 @@ helpers do
     url
   end
   
-  def compose_querystring(next_page=nil, facet_string=nil)
+  def compose_querystring(next_page=nil, facet_string=nil, start_date=nil, end_date=nil)
     qs = "?q=#{params[:q]}"
     if next_page
       qs = "#{qs}&p=#{next_page}"
@@ -31,8 +31,12 @@ helpers do
     else
       qs = "#{qs}&f=#{CGI::escape(params[:f])}" if params[:f]
     end
-    qs = "#{qs}&start_date=#{params[:start_date]}" if params[:start_date]
-    qs = "#{qs}&end_date=#{params[:end_date]}" if params[:end_date]
+    unless start_date
+      qs = "#{qs}&start_date=#{params[:start_date]}" if params[:start_date]
+    end
+    unless end_date
+      qs = "#{qs}&end_date=#{params[:end_date]}" if params[:end_date]
+    end
     qs
   end
   

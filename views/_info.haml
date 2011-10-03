@@ -14,3 +14,13 @@
       - else
         #{h(@filter["section"])}
       %a.remove-filter{:href => "#{compose_querystring(nil, "")}", :title => "Remove this filter"} &times;
+
+  - if params[:start_date]
+    .filter
+      Published on or after #{Time.parse(params[:start_date]).strftime("%A %d %B %Y")}
+      %a.remove-filter{:href => "#{compose_querystring(nil, nil, "")}", :title => "Remove this filter"} &times;
+      
+  - if params[:end_date]
+    .filter
+      Published on or before #{Time.parse(params[:end_date]).strftime("%A %d %B %Y")}
+      %a.remove-filter{:href => "#{compose_querystring(nil, nil, nil, "")}", :title => "Remove this filter"} &times;
