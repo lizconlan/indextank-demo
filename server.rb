@@ -7,7 +7,7 @@ helpers do
   include Rack::Utils
   alias_method :h, :escape_html
   
-  def format_url(url)
+  def display_url(url)
     url = url[url.index("//")+2..url.length]
     if url.rindex("#") and url.rindex("/") and url.rindex("#") > url.rindex("/")
       url = url[0..url.rindex("#")-1]

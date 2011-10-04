@@ -68,7 +68,7 @@
         %span.title
           %a.section{:href => result["url"]}= result["title"]
         %br
-        %span.url= format_url(result["url"])
+        %span.url= display_url(result["url"])
         %br
         - unless display_section(result["section"]) == ""
           %span.description= display_section(result["section"], result["chair"])
