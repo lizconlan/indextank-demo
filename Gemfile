@@ -6,4 +6,4 @@ gem 'nokogiri', '1.4.1'
 gem 'indextank', '1.0.9.1'
 gem 'json', '1.5.1'
 gem 'haml', :require => 'haml'
-
+gem 'sass', :require => 'sass'
