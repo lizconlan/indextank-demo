@@ -30,7 +30,7 @@ class Search
       query = query.gsub(thing_that_crashes_indextank, " ").squeeze(" ")
     end
     
-    index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house,timestamp', 
+    index.search(query, :snippet => 'text', :fetch => 'title,url,part,volume,columns,chair,section,house,timestamp,members', 
       :category_filters => filter, :start => offset, :docvar_filters => { "0" => [date_filter] }
     )
   end

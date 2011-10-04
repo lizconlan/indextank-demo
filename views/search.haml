@@ -75,6 +75,10 @@
           %br
         %span.description
           %cite= "H#{result['house'][0].chr} Deb " + display_time(result["timestamp"]) + " vol #{result["volume"]} cc#{result["columns"]} (Part #{result["part"]})"
+        - if result["members"]
+          %p
+            Contributors:
+            =result["members"].split(" | ").collect{|x| x.gsub("|", "").strip}.join(", ")
         %br
         - if result["snippet_text"] != ""
           %span.abstract
