@@ -1,0 +1,7 @@
+base: &base
+  adapter: mongodb
+  database: 
+  host: 
+  port: 
+  username: 
+  password: 

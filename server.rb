@@ -1,7 +1,16 @@
 require 'sinatra'
 require 'time'
 require 'lib/search'
-require 'models/catalogue'
+#require 'models/catalogue'
+require 'mongo_mapper'
+require 'models/member'
+
+before do
+  db_config = YAML::load(File.read("config/mongo.yml"))
+  MongoMapper.connection = Mongo::Connection.new(db_config['host'], db_config['port'])
+  MongoMapper.database = db_config['database']
+  MongoMapper.database.authenticate(db_config['username'], db_config['password'])
+end
 
 helpers do
   include Rack::Utils
@@ -184,8 +193,7 @@ end
 
 private  
   def do_member_contributions_search(surname)
-    index = Catalogue.new()
-    index.find_member("{name:{$regex:' #{surname}$',$options:'i'}}")
+    Member.where(:name => / #{surname}/).all
   end
   
   def dedup_results(results)

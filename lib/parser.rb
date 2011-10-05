@@ -2,6 +2,7 @@ require 'nokogiri'
 require 'rest-client'
 require 'date'
 require 'time'
+require 'mongo_mapper'
 
 class Parser
   attr_reader :date, :doc_id, :house
@@ -12,6 +13,12 @@ class Parser
     @date = date
     @house = house
     @doc_id = "#{date}_hansard_#{house[0..0].downcase()}"
+    
+    #in the wrong place - should be in the Rakefile (when there is one)
+    db_config = YAML::load(File.read("../config/mongo.yml"))
+    MongoMapper.connection = Mongo::Connection.new(db_config['host'], db_config['port'])
+    MongoMapper.database = db_config['database']
+    MongoMapper.database.authenticate(db_config['username'], db_config['password'])
   end
   
   def get_section_index(section)
