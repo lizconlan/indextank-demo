@@ -2,5 +2,6 @@
 .DS_Store
 config/indextank.yml
 config/mongohq.yml
+config/mongo.yml
 .sass-cache/
 *.bbprojectd/
