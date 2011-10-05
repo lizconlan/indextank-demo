@@ -79,6 +79,8 @@
           %p
             Contributors:
             =result["members"].split(" | ").collect{|x| x.gsub("|", "").strip}.join(", ")
+            %br
+            [#{result["members"].split(" | ").count} contributors]
         %br
         - if result["snippet_text"] != ""
           %span.abstract
