@@ -40,7 +40,7 @@ class HansardMember
     end
 end
 
-class Contribution
+class HansardContribution
   attr_reader :link, :start_column
   attr_accessor :end_column, :segments
   

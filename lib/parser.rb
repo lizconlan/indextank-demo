@@ -87,9 +87,9 @@ class Parser
         @members[member.search_name].contributions << @contribution
       end
       if @end_column == ""
-        @contribution = Contribution.new("#{page.url}\##{@last_link}", @start_column)
+        @contribution = HansardContribution.new("#{page.url}\##{@last_link}", @start_column)
       else
-        @contribution = Contribution.new("#{page.url}\##{@last_link}", @end_column)
+        @contribution = HansardContribution.new("#{page.url}\##{@last_link}", @end_column)
       end
       if new_member
         if @members.keys.include?(new_member.search_name)
