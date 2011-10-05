@@ -1,4 +1,4 @@
-class Member
+class HansardMember
   attr_reader :name, :index_name, :post, :party, :constituency, :search_name
   attr_accessor :contributions
   

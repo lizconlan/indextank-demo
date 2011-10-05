@@ -1,7 +1,7 @@
 require 'nokogiri'
 require 'rest-client'
 
-class Page
+class HansardPage
   attr_reader :html, :doc, :url, :next_url, :start_column, :end_column, :volume, :part, :title
   
   def initialize(url)

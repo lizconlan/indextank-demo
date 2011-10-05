@@ -1,7 +1,7 @@
 require 'lib/parser'
 require 'lib/search'
-require 'models/page'
-require 'models/member'
+require 'models/hansard_page'
+require 'models/hansard_member'
 
 class DebatesParser < Parser
   attr_reader :section
@@ -43,10 +43,10 @@ class DebatesParser < Parser
     unless link_to_first_page
       warn "No #{section} data available for this date"
     else
-      page = Page.new(link_to_first_page)
+      page = HansardPage.new(link_to_first_page)
       parse_page(page)
       while page.next_url
-        page = Page.new(page.next_url)
+        page = HansardPage.new(page.next_url)
         parse_page(page)
       end
     
@@ -264,14 +264,14 @@ class DebatesParser < Parser
                 #the Chair
                 name = $2
                 post = "Debate Chair"
-                member = Member.new(name, name, "", "", post)
+                member = HansardMember.new(name, name, "", "", post)
                 handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
               when /^(([^\(]*) \(([^\(]*)\):)/
                 #we has a minister
                 post = $2
                 name = $3
-                member = Member.new(name, "", "", "", post)
+                member = HansardMember.new(name, "", "", "", post)
                 handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
               when /^(([^\(]*) \(([^\(]*)\) \(([^\(]*)\))/
@@ -279,13 +279,13 @@ class DebatesParser < Parser
                 name = $2
                 constituency = $3
                 party = $4
-                member = Member.new(name, "", constituency, party)
+                member = HansardMember.new(name, "", constituency, party)
                 handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
               when /^(([^\(]*):)/
                 #an MP who's spoken before
                 name = $2
-                member = Member.new(name, name)
+                member = HansardMember.new(name, name)
                 handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
               else

@@ -1,7 +1,7 @@
 require 'lib/parser'
 require 'lib/search'
-require 'models/page'
-require 'models/member'
+require 'models/hansard_page'
+require 'models/hansard_member'
 
 class WrittenAnswersParser < Parser
   attr_reader :section
@@ -40,10 +40,10 @@ class WrittenAnswersParser < Parser
     unless link_to_first_page
       warn "No #{section} data available for this date"
     else
-      page = Page.new(link_to_first_page)
+      page = HansardPage.new(link_to_first_page)
       parse_page(page)
       while page.next_url
-        page = Page.new(page.next_url)
+        page = HansardPage.new(page.next_url)
         parse_page(page)
       end
     
