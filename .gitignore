@@ -3,4 +3,4 @@
 config/indextank.yml
 config/mongohq.yml
 .sass-cache/
-.bbprojectd/
+*.bbprojectd/
