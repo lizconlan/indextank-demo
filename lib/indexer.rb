@@ -4,7 +4,7 @@ require 'time'
 
 require 'models/catalogue'
 
-class Search
+class Indexer
   attr_reader :index, :contribs_index
   
   def initialize

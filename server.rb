@@ -1,6 +1,6 @@
 require 'sinatra'
 require 'time'
-require 'lib/search'
+require 'lib/indexer'
 #require 'models/catalogue'
 require 'mongo_mapper'
 require 'models/member'
@@ -157,7 +157,7 @@ get "/" do
       end
     end
     
-    index = Search.new()
+    index = Indexer.new()
     @results = index.search(query, @filter, @date_filter, @start)
     
     if @member

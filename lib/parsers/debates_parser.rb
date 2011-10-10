@@ -1,7 +1,4 @@
 require 'lib/parser'
-require 'lib/search'
-require 'models/hansard_page'
-require 'models/hansard_member'
 
 class DebatesParser < Parser
   attr_reader :section
@@ -38,7 +35,7 @@ class DebatesParser < Parser
     
     @subsection = ""
     
-    @indexer = Search.new()
+    @indexer = Indexer.new()
     
     unless link_to_first_page
       warn "No #{section} data available for this date"

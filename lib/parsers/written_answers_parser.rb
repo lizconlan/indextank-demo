@@ -1,7 +1,4 @@
 require 'lib/parser'
-require 'lib/search'
-require 'models/hansard_page'
-require 'models/hansard_member'
 
 class WrittenAnswersParser < Parser
   attr_reader :section
@@ -35,7 +32,7 @@ class WrittenAnswersParser < Parser
     
     @chair = ""
     
-    @indexer = Search.new()
+    @indexer = Indexer.new()
     
     unless link_to_first_page
       warn "No #{section} data available for this date"

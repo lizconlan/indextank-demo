@@ -2,7 +2,13 @@ require 'nokogiri'
 require 'rest-client'
 require 'date'
 require 'time'
+
 require 'mongo_mapper'
+require 'models/member'
+
+require 'lib/indexer'
+require 'models/hansard_page'
+require 'models/hansard_member'
 
 class Parser
   attr_reader :date, :doc_id, :house
