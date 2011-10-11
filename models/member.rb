@@ -1,38 +1,23 @@
 class Member
   include MongoMapper::Document
+  scope :by_name, lambda { |name| where(:name => name) }
+  scope :by_post, lambda { |post| where(:post => post) }
   
   key :name, String
   key :post, String
+  key :contribution_ids, Array
   
-  many :contributions
-  
-  
-  def self.find_or_create(name)
-    member = nil
-    name = name.strip
-    if name.downcase() =~ /^the / or name.downcase() =~ / speaker$/
-      member = Member.first(:post => name)
-      unless member
-        member = Member.new({:post => name})
-        member.save
-      end
-    else
-      if name.split(" ").length > 1
-        member = Member.first(:name => name)
-        unless member
-          member = Member.new({:name => name})
-          member.save
-        end
-      end
-    end
-    member
-  end
+  many :contributions, :in => :contribution_ids
 end
 
 class Contribution
-  include MongoMapper::EmbeddedDocument
+  include MongoMapper::Document
   
+  belongs_to :member
+  
+  key :member_id, BSON::ObjectId
   key :url, String
   key :date, String
   key :section, String
+  key :subject, String
 end

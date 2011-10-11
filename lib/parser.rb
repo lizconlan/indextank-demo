@@ -21,7 +21,7 @@ class Parser
     @doc_id = "#{date}_hansard_#{house[0..0].downcase()}"
     
     #in the wrong place - should be in the Rakefile (when there is one)
-    db_config = YAML::load(File.read("../config/mongo.yml"))
+    db_config = YAML::load(File.read("config/mongo.yml"))
     MongoMapper.connection = Mongo::Connection.new(db_config['host'], db_config['port'])
     MongoMapper.database = db_config['database']
     MongoMapper.database.authenticate(db_config['username'], db_config['password'])
@@ -120,7 +120,17 @@ class Parser
     def store_member_contributions
       @members.keys.each do |member|
         p "storing: #{@members[member].index_name}"
-        @indexer.add_member(@members[member].index_name, @members[member].post)
+        mp = Member.find_or_create_by_name(@members[member].index_name)
+        @members[member].contributions.each do |contrib|
+          contribution = Contribution.find_or_create_by_url(contrib.link)
+          contribution.date = @date
+          contribution.section = @section
+          contribution.subject = @subject
+          contribution.member = mp
+          contribution.save
+          mp.contributions << contribution
+        end
+        mp.save
       end
       @members = {}
       @member = nil
