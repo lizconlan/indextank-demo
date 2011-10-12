@@ -5,6 +5,7 @@ require 'time'
 
 require 'mongo_mapper'
 require 'models/member'
+require 'models/contribution'
 
 require 'lib/indexer'
 require 'models/hansard_page'
@@ -123,12 +124,15 @@ class Parser
         mp = Member.find_or_create_by_name(@members[member].index_name)
         @members[member].contributions.each do |contrib|
           contribution = Contribution.find_or_create_by_url(contrib.link)
-          contribution.date = @date
+          contribution.member = mp
           contribution.section = @section
           contribution.subject = @subject
-          contribution.member = mp
+          contribution.date = @date
           contribution.save
-          mp.contributions << contribution
+          
+          unless mp.contribution_ids.include?(contribution.id)
+            mp.contribution_ids << contribution.id
+          end
         end
         mp.save
       end
