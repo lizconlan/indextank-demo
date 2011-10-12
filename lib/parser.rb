@@ -6,6 +6,7 @@ require 'time'
 require 'mongo_mapper'
 require 'models/member'
 require 'models/contribution'
+require 'models/debate'
 
 require 'lib/indexer'
 require 'models/hansard_page'
@@ -119,23 +120,42 @@ class Parser
     end
     
     def store_member_contributions
+      debate = Debate.find_or_create_by_url(@segment_link)
+      debate.section = @section
+      debate.subject = @subject
+      debate.date = @date
+      
       @members.keys.each do |member|
         p "storing: #{@members[member].index_name}"
         mp = Member.find_or_create_by_name(@members[member].index_name)
+        
+        unless mp.debate_ids.include?(debate.id)
+          mp.debate_ids << debate.id
+        end
+        
+        unless debate.member_ids.include?(mp.id)
+          debate.member_ids << mp.id
+        end
+        
         @members[member].contributions.each do |contrib|
           contribution = Contribution.find_or_create_by_url(contrib.link)
           contribution.member = mp
-          contribution.section = @section
-          contribution.subject = @subject
-          contribution.date = @date
+          # contribution.section = @section
+          # contribution.subject = @subject
+          # contribution.date = @date
           contribution.save
           
           unless mp.contribution_ids.include?(contribution.id)
             mp.contribution_ids << contribution.id
           end
+          
+          unless debate.contribution_ids.include?(contribution.id)
+            debate.contribution_ids << contribution.id
+          end
         end
         mp.save
       end
+      debate.save
       @members = {}
       @member = nil
       p ""
